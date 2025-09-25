@@ -44,3 +44,6 @@ coverage/
 # Build outputs
 dist/
 build/
+# Remove sensitive files
+mediaanalysis-*.json
+get-token-*.js
