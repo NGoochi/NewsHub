@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 // Import routes
 import projectRoutes from './routes/projects';
 import apiRoutes from './routes/api';
+import eventRegistryRoutes from './routes/eventRegistry';
 import { projectCache } from './lib/cache';
 
 const app = express();
@@ -24,6 +25,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Routes
 app.use('/api', apiRoutes);
+app.use('/api/event-registry', eventRegistryRoutes);
 app.use('/', projectRoutes);
 
 // Error handling middleware

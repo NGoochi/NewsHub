@@ -23,9 +23,26 @@
         .status-pending { background-color: #f8d7da; color: #721c24; }
         .form-section { padding: 16px; border: 1px solid #ddd; border-radius: 8px; margin-top: 24px; }
         .form-group { margin-bottom: 12px; }
-        input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        input, textarea, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
         textarea { min-height: 80px; }
         .loading { opacity: 0.5; }
+        .panel-tabs { display: flex; margin-bottom: 16px; border-bottom: 1px solid #ddd; }
+        .panel-tab { padding: 12px 16px; cursor: pointer; border-bottom: 2px solid transparent; }
+        .panel-tab.active { border-bottom-color: #0070f3; background: #f8f9fa; }
+        .panel-content { display: none; }
+        .panel-content.active { display: block; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .sources-container { max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 12px; border-radius: 4px; }
+        .source-item { display: flex; align-items: center; padding: 4px 0; }
+        .source-item input[type="checkbox"] { margin-right: 8px; }
+        .filters { display: flex; gap: 12px; margin-bottom: 16px; }
+        .filter-group { flex: 1; }
+        .filter-group select { margin-top: 4px; }
+        .btn-group { display: flex; gap: 8px; margin-top: 16px; }
+        .status-message { padding: 8px 12px; border-radius: 4px; margin: 8px 0; }
+        .status-success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status-info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
     </style>
 </head>
 <body>
@@ -87,24 +104,137 @@
             <% } %>
         </section>
 
-        <div class="form-section">
-            <h3>Add Article (Manual)</h3>
-            <form id="addArticleForm">
+        <!-- Panel Tabs -->
+        <div class="panel-tabs">
+            <div class="panel-tab active" data-panel="manual">Manual Article Entry</div>
+            <div class="panel-tab" data-panel="event-registry">Event Registry</div>
+        </div>
+
+        <!-- Manual Article Entry Panel -->
+        <div class="panel-content active" id="manual-panel">
+            <div class="form-section">
+                <h3>Add Article (Manual)</h3>
+                <form id="addArticleForm">
+                    <div class="form-group">
+                        <input type="text" id="articleTitle" placeholder="Article Title *" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="url" id="articleUrl" placeholder="URL (optional)">
+                    </div>
+                    <div class="form-group">
+                        <textarea id="articleContent" placeholder="Content (optional)"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Article</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Event Registry Panel -->
+        <div class="panel-content" id="event-registry-panel">
+            <div class="form-section">
+                <h3>Event Registry - Fetch Articles</h3>
+                
+                <!-- Search Configuration -->
                 <div class="form-group">
-                    <input type="text" id="articleTitle" placeholder="Article Title *" required>
+                    <label>Search Mode:</label>
+                    <select id="searchMode">
+                        <option value="simple">Simple Search (Multiple Terms)</option>
+                        <option value="boolean">Boolean Query</option>
+                    </select>
                 </div>
+
+                <div class="form-group" id="simpleSearchGroup">
+                    <label>Search Terms (one per line):</label>
+                    <textarea id="searchTerms" placeholder="Enter search terms, one per line&#10;e.g.&#10;climate change&#10;global warming&#10;environmental policy"></textarea>
+                </div>
+
+                <div class="form-group" id="booleanSearchGroup" style="display: none;">
+                    <label>Boolean Query:</label>
+                    <textarea id="booleanQuery" placeholder="Enter boolean query&#10;e.g. (climate change OR global warming) AND policy"></textarea>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Start Date:</label>
+                        <input type="date" id="startDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label>End Date:</label>
+                        <input type="date" id="endDate" required>
+                    </div>
+                </div>
+
+                <!-- Sources Section -->
                 <div class="form-group">
-                    <input type="url" id="articleUrl" placeholder="URL (optional)">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label>News Sources:</label>
+                        <div>
+                            <button type="button" id="loadSources" class="btn btn-secondary">Load Sources</button>
+                            <button type="button" id="selectAllSources" class="btn btn-secondary" style="display: none;">Select All</button>
+                            <button type="button" id="deselectAllSources" class="btn btn-secondary" style="display: none;">Deselect All</button>
+                        </div>
+                    </div>
+
+                    <!-- Source Filters -->
+                    <div class="filters" id="sourceFilters" style="display: none;">
+                        <div class="filter-group">
+                            <label>Region:</label>
+                            <select id="regionFilter">
+                                <option value="">All Regions</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Country:</label>
+                            <select id="countryFilter">
+                                <option value="">All Countries</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Language:</label>
+                            <select id="languageFilter">
+                                <option value="">All Languages</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Sources List -->
+                    <div class="sources-container" id="sourcesContainer" style="display: none;">
+                        <div id="sourcesList"></div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <textarea id="articleContent" placeholder="Content (optional)"></textarea>
+
+                <!-- Action Buttons -->
+                <div class="btn-group">
+                    <button type="button" id="fetchArticles" class="btn btn-primary" disabled>Fetch Articles</button>
+                    <button type="button" id="writeToSheet" class="btn btn-success" disabled>Write to Sheet</button>
                 </div>
-                <button type="submit" class="btn btn-primary">Add Article</button>
-            </form>
+
+                <!-- Status Messages -->
+                <div id="statusMessages"></div>
+            </div>
         </div>
     </div>
 
     <script>
+        // Panel switching
+        const panelTabs = document.querySelectorAll('.panel-tab');
+        const panelContents = document.querySelectorAll('.panel-content');
+
+        panelTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const panelId = tab.dataset.panel;
+                
+                // Update active tab
+                panelTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update active content
+                panelContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(panelId + '-panel').classList.add('active');
+            });
+        });
+
         // Article selection handling
         const checkboxes = document.querySelectorAll('.article-checkbox');
         const runAnalysisBtn = document.getElementById('runAnalysis');
@@ -178,6 +308,284 @@
                 alert('Failed to add article');
             }
         });
+
+        // Event Registry functionality
+        let eventRegistryData = {
+            sources: [],
+            fetchedArticles: [],
+            projectId: '<%= project.id %>'
+        };
+
+        // Search mode handling
+        document.getElementById('searchMode').addEventListener('change', (e) => {
+            const mode = e.target.value;
+            document.getElementById('simpleSearchGroup').style.display = mode === 'simple' ? 'block' : 'none';
+            document.getElementById('booleanSearchGroup').style.display = mode === 'boolean' ? 'block' : 'none';
+        });
+
+        // Set default date range (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+        document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+
+        // Load sources
+        document.getElementById('loadSources').addEventListener('click', async () => {
+            showMessage('Loading sources...', 'info');
+            
+            try {
+                const res = await fetch('/api/event-registry/sources');
+                const data = await res.json();
+                
+                if (res.ok) {
+                    eventRegistryData.sources = data.sources;
+                    populateSourceFilters(data.filters);
+                    populateSourcesList(data.sources);
+                    showMessage(`Loaded ${data.sources.length} sources`, 'success');
+                } else {
+                    showMessage(data.message || 'Failed to load sources', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to load sources', 'error');
+            }
+        });
+
+        // Source filtering
+        function setupSourceFilters() {
+            const regionFilter = document.getElementById('regionFilter');
+            const countryFilter = document.getElementById('countryFilter');
+            const languageFilter = document.getElementById('languageFilter');
+
+            [regionFilter, countryFilter, languageFilter].forEach(filter => {
+                filter.addEventListener('change', filterSources);
+            });
+        }
+
+        function filterSources() {
+            const regionFilter = document.getElementById('regionFilter').value;
+            const countryFilter = document.getElementById('countryFilter').value;
+            const languageFilter = document.getElementById('languageFilter').value;
+
+            const filteredSources = eventRegistryData.sources.filter(source => {
+                return (!regionFilter || source.region === regionFilter) &&
+                       (!countryFilter || source.country === countryFilter) &&
+                       (!languageFilter || source.language === languageFilter);
+            });
+
+            populateSourcesList(filteredSources);
+        }
+
+        function populateSourceFilters(filters) {
+            const regionFilter = document.getElementById('regionFilter');
+            const countryFilter = document.getElementById('countryFilter');
+            const languageFilter = document.getElementById('languageFilter');
+
+            // Clear existing options except first
+            [regionFilter, countryFilter, languageFilter].forEach(filter => {
+                while (filter.children.length > 1) {
+                    filter.removeChild(filter.lastChild);
+                }
+            });
+
+            // Add region options
+            filters.regions.forEach(region => {
+                const option = document.createElement('option');
+                option.value = region;
+                option.textContent = region;
+                regionFilter.appendChild(option);
+            });
+
+            // Add country options
+            filters.countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countryFilter.appendChild(option);
+            });
+
+            // Add language options
+            filters.languages.forEach(language => {
+                const option = document.createElement('option');
+                option.value = language;
+                option.textContent = language;
+                languageFilter.appendChild(option);
+            });
+
+            document.getElementById('sourceFilters').style.display = 'block';
+            setupSourceFilters();
+        }
+
+        function populateSourcesList(sources) {
+            const sourcesList = document.getElementById('sourcesList');
+            sourcesList.innerHTML = '';
+
+            sources.forEach(source => {
+                const sourceItem = document.createElement('div');
+                sourceItem.className = 'source-item';
+                sourceItem.innerHTML = `
+                    <input type="checkbox" id="source-${source.uri}" value="${source.uri}">
+                    <label for="source-${source.uri}">
+                        <strong>${source.title}</strong> - ${source.region || 'Unknown'} (${source.country || 'Unknown'}) - ${source.language || 'Unknown'}
+                    </label>
+                `;
+                sourcesList.appendChild(sourceItem);
+            });
+
+            document.getElementById('sourcesContainer').style.display = 'block';
+            document.getElementById('selectAllSources').style.display = 'inline-block';
+            document.getElementById('deselectAllSources').style.display = 'inline-block';
+            document.getElementById('fetchArticles').disabled = false;
+        }
+
+        // Select/Deselect all sources
+        document.getElementById('selectAllSources').addEventListener('click', () => {
+            document.querySelectorAll('#sourcesContainer input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+
+        document.getElementById('deselectAllSources').addEventListener('click', () => {
+            document.querySelectorAll('#sourcesContainer input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+
+        // Fetch articles
+        document.getElementById('fetchArticles').addEventListener('click', async () => {
+            const searchMode = document.getElementById('searchMode').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            // Get selected sources
+            const selectedSources = Array.from(document.querySelectorAll('#sourcesContainer input[type="checkbox"]:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (selectedSources.length === 0) {
+                showMessage('Please select at least one source', 'error');
+                return;
+            }
+
+            let searchTerms = [];
+            let booleanQuery = '';
+            let useBooleanQuery = false;
+
+            if (searchMode === 'simple') {
+                searchTerms = document.getElementById('searchTerms').value
+                    .split('\n')
+                    .map(term => term.trim())
+                    .filter(term => term.length > 0);
+                
+                if (searchTerms.length === 0) {
+                    showMessage('Please enter at least one search term', 'error');
+                    return;
+                }
+            } else {
+                booleanQuery = document.getElementById('booleanQuery').value.trim();
+                useBooleanQuery = true;
+                
+                if (!booleanQuery) {
+                    showMessage('Please enter a boolean query', 'error');
+                    return;
+                }
+            }
+
+            if (!startDate || !endDate) {
+                showMessage('Please select start and end dates', 'error');
+                return;
+            }
+
+            showMessage('Fetching articles... This may take a while.', 'info');
+            document.getElementById('fetchArticles').disabled = true;
+
+            try {
+                const requestBody = {
+                    searchTerms,
+                    sources: selectedSources,
+                    startDate,
+                    endDate,
+                    useBooleanQuery,
+                    booleanQuery,
+                    projectId: eventRegistryData.projectId
+                };
+
+                const res = await fetch('/api/event-registry/fetch-articles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    eventRegistryData.fetchedArticles = data.articles;
+                    showMessage(`Successfully fetched ${data.count} articles`, 'success');
+                    document.getElementById('writeToSheet').disabled = false;
+                } else {
+                    showMessage(data.message || 'Failed to fetch articles', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to fetch articles', 'error');
+            } finally {
+                document.getElementById('fetchArticles').disabled = false;
+            }
+        });
+
+        // Write to sheet
+        document.getElementById('writeToSheet').addEventListener('click', async () => {
+            if (eventRegistryData.fetchedArticles.length === 0) {
+                showMessage('No articles to write. Please fetch articles first.', 'error');
+                return;
+            }
+
+            showMessage('Writing articles to sheet...', 'info');
+            document.getElementById('writeToSheet').disabled = true;
+
+            try {
+                const res = await fetch('/api/event-registry/write-to-sheet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        projectId: eventRegistryData.projectId,
+                        articles: eventRegistryData.fetchedArticles
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showMessage(`Successfully wrote ${data.count} articles to your project sheet`, 'success');
+                    // Clear fetched articles
+                    eventRegistryData.fetchedArticles = [];
+                    document.getElementById('writeToSheet').disabled = true;
+                } else {
+                    showMessage(data.message || 'Failed to write articles to sheet', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to write articles to sheet', 'error');
+            } finally {
+                document.getElementById('writeToSheet').disabled = false;
+            }
+        });
+
+        // Helper function to show status messages
+        function showMessage(message, type) {
+            const statusMessages = document.getElementById('statusMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `status-message status-${type}`;
+            messageDiv.textContent = message;
+            
+            statusMessages.innerHTML = '';
+            statusMessages.appendChild(messageDiv);
+            
+            // Auto-remove success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 5000);
+            }
+        }
     </script>
 </body>
 </html>
