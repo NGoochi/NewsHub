@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsHub</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 40px 20px; 
+        }
+        .header {
+            text-align: left;
+            margin-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { 
+            color: #2c3e50; 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            margin: 0;
+        }
+        .main-nav {
+            display: flex;
+            gap: 20px;
+        }
+        .nav-link {
+            color: #7f8c8d;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        .nav-link:hover {
+            color: #34495e;
+            background: #ecf0f1;
+        }
+        .nav-link.active {
+            color: #34495e;
+            background: #e8f4f8;
+            border: 1px solid #bdc3c7;
+        }
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .project-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+            border: 2px solid #e0e0e0;
+            position: relative;
+            overflow: hidden;
+            min-height: 100px;
+        }
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        .new-project-card {
+            background: #34495e;
+            color: white;
+            border: 2px solid #2c3e50;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+        }
+        .new-project-card:hover {
+            background: #2c3e50;
+        }
+        .new-project-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+        .new-project-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .project-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 8px 0;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .project-title a {
+            color: #2c3e50;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .project-title a:hover {
+            color: #34495e;
+        }
+        .project-link {
+            color: #2c3e50;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .project-link:hover {
+            color: #34495e;
+        }
+        .project-meta {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            margin: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .project-stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #ecf0f1;
+        }
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        .stat-number {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #34495e;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+        .sheet-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: #34495e;
+            border: 1px solid #2c3e50;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .sheet-link:hover {
+            background: #2c3e50;
+            color: white;
+        }
+        .create-form {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .create-form.show {
+            display: flex;
+        }
+        .form-modal {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+        }
+        .form-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 24px 0;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e8ecf0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #34495e;
+        }
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        .btn {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-primary {
+            background: #34495e;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2c3e50;
+        }
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 0.85rem;
+            z-index: 1000;
+            min-width: 200px;
+        }
+        .sync-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .sync-icon {
+            font-size: 1rem;
+        }
+        .sync-text {
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+        .sync-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            color: #95a5a6;
+            font-size: 0.8rem;
+        }
+        .sync-status.synced {
+            border-color: #27ae60;
+            background: #f8fff8;
+        }
+        .sync-status.synced .sync-icon {
+            color: #27ae60;
+        }
+        .sync-status.synced .sync-text {
+            color: #27ae60;
+        }
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            margin-top: 40px;
+        }
+        .project-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #ecf0f1;
+            align-items: center;
+        }
+        .btn-archive {
+            font-size: 0.9rem;
+            padding: 6px 12px;
+            background: #e74c3c;
+            border: 1px solid #c0392b;
+            color: white;
+        }
+        .btn-archive:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>NewsHub</h1>
+            <nav class="main-nav">
+                <a href="/" class="nav-link active">Dashboard</a>
+                <a href="/archive" class="nav-link">Archive</a>
+                <a href="/settings" class="nav-link">Settings</a>
+            </nav>
+        </div>
+
+        <div class="projects-grid">
+            <!-- New Project Card -->
+            <div class="project-card new-project-card" onclick="showCreateForm()">
+                <div class="new-project-icon">+</div>
+                <div class="new-project-text">Create New Project</div>
+            </div>
+
+            <!-- Existing Projects -->
+            <% if (projects.length > 0) { %>
+                <% projects.forEach(project => { %>
+                    <div class="project-card">
+                        <div class="project-title">
+                            <a href="/<%= project.id %>"><%= project.name %></a>
+                        </div>
+                        <div class="project-meta">
+                            <%= new Date(project.createdAt).toLocaleDateString() %>
+                        </div>
+                        <div class="project-stats">
+                            <div class="stat">
+                                <div class="stat-number"><%= project.articles ? project.articles.length : 0 %></div>
+                                <div class="stat-label">Articles</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number"><%= project.analysisRuns ? project.analysisRuns.length : 0 %></div>
+                                <div class="stat-label">Analyses</div>
+                            </div>
+                        </div>
+                        <div class="project-actions">
+                            <% if (project.sheetUrl) { %>
+                                <a href="<%= project.sheetUrl %>" target="_blank" rel="noreferrer" class="sheet-link">
+                                    View Database
+                                </a>
+                            <% } %>
+                            <button class="btn btn-archive" onclick="archiveProject('<%= project.id %>', '<%= project.name %>')">
+                                Archive
+                            </button>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } %>
+
+            <% if (projects.length === 0) { %>
+                <div class="empty-state">
+                    <p>No projects yet. Click the + button to create your first project!</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div class="create-form" id="createForm">
+        <div class="form-modal">
+            <h3 class="form-title">Create New Project</h3>
+            <form id="createProjectForm">
+                <div class="form-group">
+                    <label for="projectName">Project Name</label>
+                    <input type="text" id="projectName" placeholder="Enter project name" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateForm()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="createBtn">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sync Status Indicator -->
+    <div class="sync-status" id="syncStatus">
+        <div class="sync-indicator">
+            <span class="sync-icon">🔄</span>
+            <span class="sync-text">Syncing...</span>
+        </div>
+        <div class="sync-details">
+            <span class="sync-time" id="syncTime">Last sync: <%= syncStatus.lastSync ? new Date(syncStatus.lastSync).toLocaleTimeString() : 'Never' %></span>
+            <span class="sync-counts" id="syncCounts">
+                <%= syncStatus.projectCount %> projects, <%= syncStatus.archivedCount %> archived
+            </span>
+        </div>
+    </div>
+
+    <script>
+        function showCreateForm() {
+            document.getElementById('createForm').classList.add('show');
+            document.getElementById('projectName').focus();
+        }
+
+        function hideCreateForm() {
+            document.getElementById('createForm').classList.remove('show');
+            document.getElementById('projectName').value = '';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('createForm').addEventListener('click', (e) => {
+            if (e.target.id === 'createForm') {
+                hideCreateForm();
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('createProjectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('projectName').value;
+            const btn = document.getElementById('createBtn');
+            
+            if (!name) return;
+            
+            btn.textContent = 'Creating...';
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/projects/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    alert('✅ Project database created successfully!');
+                    window.location.href = `/${data.project.id}`;
+                } else {
+                    const err = await res.json();
+                    alert(err.message || 'Failed to create project');
+                }
+            } catch (error) {
+                alert('Failed to create project');
+            } finally {
+                btn.textContent = 'Create Project';
+                btn.disabled = false;
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideCreateForm();
+            }
+        });
+
+
+        // Archive a project
+        async function archiveProject(projectId, projectName) {
+            if (!confirm(`Are you sure you want to archive "${projectName}"? This will move it to the Archive folder and remove it from the dashboard.`)) {
+                return;
+            }
+
+            const button = event.target;
+            const originalText = button.textContent;
+            
+            button.textContent = 'Archiving...';
+            button.disabled = true;
+            button.style.opacity = '0.6';
+            
+            try {
+                const res = await fetch(`/api/projects/${projectId}/archive`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (res.ok) {
+                    button.textContent = 'Archived!';
+                    button.style.background = '#27ae60';
+                    setTimeout(() => {
+                        window.location.reload(); // Refresh to remove archived project
+                    }, 1000);
+                } else {
+                    const err = await res.json();
+                    button.textContent = 'Failed';
+                    button.style.background = '#e74c3c';
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.disabled = false;
+                        button.style.opacity = '1';
+                        button.style.background = '#e74c3c';
+                    }, 2000);
+                }
+            } catch (error) {
+                button.textContent = 'Failed';
+                button.style.background = '#e74c3c';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                    button.style.background = '#e74c3c';
+                }, 2000);
+            }
+        }
+
+        // Update sync status
+        function updateSyncStatus() {
+            const syncStatus = document.getElementById('syncStatus');
+            const syncIcon = syncStatus.querySelector('.sync-icon');
+            const syncText = syncStatus.querySelector('.sync-text');
+            
+            // Check if currently syncing
+            const isSyncing = <%= syncStatus.isSyncing %>;
+            
+            if (isSyncing) {
+                syncStatus.classList.remove('synced');
+                syncIcon.textContent = '🔄';
+                syncText.textContent = 'Syncing...';
+            } else {
+                syncStatus.classList.add('synced');
+                syncIcon.textContent = '✅';
+                syncText.textContent = 'Synced';
+            }
+        }
+
+        // Initialize sync status
+        updateSyncStatus();
+    </script>
+</body>
+</html>

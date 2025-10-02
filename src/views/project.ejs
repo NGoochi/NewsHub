@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= project.name %></title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 24px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { margin: 0; color: #333; }
+        .header p { color: #666; margin: 4px 0 0 0; }
+        .btn { padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block; }
+        .btn-secondary { background: #f5f5f5; color: #333; }
+        .btn-primary { background: #0070f3; color: white; }
+        .btn-success { background: #28a745; color: white; border: none; cursor: pointer; }
+        .btn-success:disabled { background: #ccc; cursor: not-allowed; opacity: 0.5; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        th, td { padding: 8px; text-align: left; border: 1px solid #ddd; }
+        th { background-color: #f5f5f5; }
+        .status-badge { padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        .status-complete { background-color: #d4edda; color: #155724; }
+        .status-pending { background-color: #f8d7da; color: #721c24; }
+        .form-section { padding: 16px; border: 1px solid #ddd; border-radius: 8px; margin-top: 24px; }
+        .form-group { margin-bottom: 12px; }
+        input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        textarea { min-height: 80px; }
+        .loading { opacity: 0.5; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1><%= project.name %></h1>
+                <p>Created: <%= new Date(project.createdAt).toLocaleString() %></p>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <a href="/" class="btn btn-secondary">← Back to Dashboard</a>
+                <% if (project.sheetUrl) { %>
+                    <a href="<%= project.sheetUrl %>" target="_blank" rel="noreferrer" class="btn btn-primary">
+                        📊 View Database
+                    </a>
+                <% } %>
+            </div>
+        </div>
+
+        <section style="margin-bottom: 24px;">
+            <h2>Articles (<%= project.articles ? project.articles.length : 0 %>)</h2>
+            <% if (project.articles && project.articles.length > 0) { %>
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Title</th>
+                            <th>Source</th>
+                            <th>Retrieved</th>
+                            <th>Analysis</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% project.articles.forEach(article => { %>
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="article-checkbox" data-id="<%= article.id %>">
+                                </td>
+                                <td><%= article.title %></td>
+                                <td><%= article.source || 'Manual' %></td>
+                                <td><%= article.retrievedAt ? new Date(article.retrievedAt).toLocaleString() : '' %></td>
+                                <td>
+                                    <span class="status-badge <%= article.analysisStatus === 'complete' ? 'status-complete' : 'status-pending' %>">
+                                        <%= article.analysisStatus || 'pending' %>
+                                    </span>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+
+                <div style="margin-bottom: 16px;">
+                    <button id="runAnalysis" class="btn btn-success" disabled>
+                        Run Analysis on Selected (<span id="selectedCount">0</span>)
+                    </button>
+                </div>
+            <% } else { %>
+                <p>No articles yet. Add some articles below to get started!</p>
+            <% } %>
+        </section>
+
+        <div class="form-section">
+            <h3>Add Article (Manual)</h3>
+            <form id="addArticleForm">
+                <div class="form-group">
+                    <input type="text" id="articleTitle" placeholder="Article Title *" required>
+                </div>
+                <div class="form-group">
+                    <input type="url" id="articleUrl" placeholder="URL (optional)">
+                </div>
+                <div class="form-group">
+                    <textarea id="articleContent" placeholder="Content (optional)"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Article</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Article selection handling
+        const checkboxes = document.querySelectorAll('.article-checkbox');
+        const runAnalysisBtn = document.getElementById('runAnalysis');
+        const selectedCount = document.getElementById('selectedCount');
+        let selectedArticles = {};
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const articleId = e.target.dataset.id;
+                selectedArticles[articleId] = e.target.checked;
+                
+                const count = Object.values(selectedArticles).filter(Boolean).length;
+                selectedCount.textContent = count;
+                runAnalysisBtn.disabled = count === 0;
+            });
+        });
+
+        // Run analysis
+        runAnalysisBtn.addEventListener('click', async () => {
+            const articleIds = Object.keys(selectedArticles).filter(id => selectedArticles[id]);
+            if (articleIds.length === 0) return;
+
+            runAnalysisBtn.textContent = 'Running Analysis...';
+            runAnalysisBtn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/projects/<%= project.id %>/run-analysis`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ articleIds })
+                });
+
+                if (res.ok) {
+                    alert('Analysis completed (saved to project).');
+                    location.reload(); // Refresh to show updated data
+                } else {
+                    const err = await res.json();
+                    alert(err.message || 'Analysis error');
+                }
+            } catch (error) {
+                alert('Analysis failed');
+            } finally {
+                runAnalysisBtn.textContent = 'Run Analysis on Selected (' + articleIds.length + ')';
+                runAnalysisBtn.disabled = false;
+            }
+        });
+
+        // Add article form
+        document.getElementById('addArticleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('articleTitle').value;
+            const url = document.getElementById('articleUrl').value;
+            const content = document.getElementById('articleContent').value;
+
+            if (!title) return;
+
+            try {
+                const res = await fetch(`/api/projects/<%= project.id %>/articles/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, url, content })
+                });
+
+                if (res.ok) {
+                    location.reload(); // Refresh to show new article
+                } else {
+                    alert('Failed to add article');
+                }
+            } catch (error) {
+                alert('Failed to add article');
+            }
+        });
+    </script>
+</body>
+</html>
