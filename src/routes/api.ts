@@ -6,6 +6,8 @@ import { runRunchat } from '../lib/runchat';
 import { writeAnalysisToSheet } from '../lib/googleSheets';
 import { nanoid } from 'nanoid';
 import { Project } from '../types/project';
+import { syncProjectsWithDrive } from '../lib/googleDriveStorage';
+import { projectCache } from '../lib/cache';
 
 const router = express.Router();
 
@@ -198,6 +200,27 @@ router.post('/projects/:slug/run-analysis', async (req: express.Request, res: ex
   } catch (err: any) {
     console.error('run analysis error', err);
     res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+});
+
+// API: Manual sync endpoint
+router.post('/sync', async (req: express.Request, res: express.Response) => {
+  try {
+    console.log('Manual sync requested');
+    await syncProjectsWithDrive();
+    const syncStatus = projectCache.getSyncStatus();
+    res.json({ 
+      success: true, 
+      message: 'Sync completed successfully',
+      lastSync: syncStatus.lastSync,
+      isSyncing: syncStatus.isSyncing
+    });
+  } catch (err: any) {
+    console.error('Manual sync error:', err);
+    res.status(500).json({ 
+      success: false,
+      message: err.message || 'Sync failed'
+    });
   }
 });
 
