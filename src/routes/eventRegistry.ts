@@ -191,21 +191,39 @@ router.post('/write-to-sheet', async (req: express.Request, res: express.Respons
 
     const sheetData = [headers, ...formattedArticles];
 
-    // Write to the project's sheet
-    const range = 'Articles!A1';
-    await sheets.spreadsheets.values.append({
-      spreadsheetId: project.sheetId,
-      range,
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: sheetData,
-      },
-    });
+    // Write to the project's sheet in batches to handle large datasets
+    const batchSize = 1000; // Process 1000 articles at a time
+    const totalBatches = Math.ceil(sheetData.length / batchSize);
+    
+    for (let i = 0; i < totalBatches; i++) {
+      const startIndex = i * batchSize;
+      const endIndex = Math.min(startIndex + batchSize, sheetData.length);
+      const batch = sheetData.slice(startIndex, endIndex);
+      
+      // For the first batch, use append to add headers if needed
+      // For subsequent batches, just append the data rows
+      const range = i === 0 ? 'Articles!A1' : 'Articles!A:A';
+      
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: project.sheetId,
+        range,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: batch,
+        },
+      });
+      
+      // Add a small delay between batches to avoid rate limiting
+      if (i < totalBatches - 1) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
 
     res.json({
       success: true,
-      message: `Successfully wrote ${articles.length} articles to project sheet`,
-      count: articles.length
+      message: `Successfully wrote ${articles.length} articles to project sheet${totalBatches > 1 ? ` in ${totalBatches} batches` : ''}`,
+      count: articles.length,
+      batches: totalBatches
     });
 
   } catch (error: any) {
