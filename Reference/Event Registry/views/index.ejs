@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .main-container {
+            display: flex;
+            height: 100vh;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+        }
+        
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        h2 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        
+        h3 {
+            margin-top: 0;
+            color: #495057;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .form-group input[type="file"] {
+            padding: 6px;
+            background-color: #f8f9fa;
+            border: 2px dashed #ced4da;
+            cursor: pointer;
+        }
+        
+        .form-group input[type="file"]:hover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+        
+        .form-group input[type="date"] {
+            width: 150px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+            font-family: monospace;
+            line-height: 1.4;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #6c757d;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        
+        .search-terms {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .search-term {
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .date-range {
+            display: flex;
+            gap: 10px;
+            align-items: end;
+        }
+        
+        .sources-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 8px;
+            background-color: white;
+        }
+        
+        .source-item {
+            display: flex;
+            align-items: center;
+            padding: 6px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .source-item:last-child {
+            border-bottom: none;
+        }
+        
+        .source-item input[type="checkbox"] {
+            margin-right: 8px;
+            width: auto;
+        }
+        
+        .source-item label {
+            margin: 0;
+            cursor: pointer;
+            flex: 1;
+            font-size: 12px;
+        }
+        
+        .sources-summary {
+            background-color: #e9ecef;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #495057;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .source-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+            font-size: 12px;
+        }
+        
+        .source-meta {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        
+        .source-meta span {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1px 4px;
+            font-size: 10px;
+            color: #495057;
+        }
+        
+        .source-region {
+            background-color: #e3f2fd !important;
+            border-color: #bbdefb !important;
+            color: #1565c0 !important;
+        }
+        
+        .source-country {
+            background-color: #f3e5f5 !important;
+            border-color: #e1bee7 !important;
+            color: #7b1fa2 !important;
+        }
+        
+        .source-language {
+            background-color: #e8f5e8 !important;
+            border-color: #c8e6c9 !important;
+            color: #2e7d32 !important;
+        }
+        
+        .select-all-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .select-all-controls button {
+            padding: 6px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        
+        .select-all-controls button:hover {
+            background-color: #e9ecef;
+        }
+        
+        .filter-controls {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 10px;
+        }
+        
+        .filter-controls h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 120px;
+        }
+        
+        .filter-group label {
+            margin-bottom: 3px;
+            font-weight: 500;
+            font-size: 12px;
+            color: #333;
+        }
+        
+        .filter-group select {
+            padding: 6px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 12px;
+            background-color: white;
+        }
+        
+        .filter-group button {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .btn-success {
+            background-color: #28a745;
+        }
+        
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #007bff;
+            margin: 15px 0;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .results {
+            margin-top: 15px;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #f5c6cb;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #c3e6cb;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #bee5eb;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .article {
+            background-color: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            border-left: 3px solid #28a745;
+        }
+        
+        .article h4 {
+            margin-top: 0;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .article-meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .article-body {
+            line-height: 1.5;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            background-color: white;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .article-url {
+            margin-top: 8px;
+        }
+        
+        .article-url a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        
+        .article-url a:hover {
+            text-decoration: underline;
+        }
+        
+        .stats {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .json-output {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            margin-top: 15px;
+        }
+        
+        .json-output pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        /* Boolean Search Styles */
+        .search-mode-toggle {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .search-mode-toggle label {
+            margin-right: 15px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .search-mode-toggle input[type="radio"] {
+            margin-right: 6px;
+            width: auto;
+        }
+        
+        .search-mode {
+            margin-top: 10px;
+        }
+        
+        .boolean-search-container {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .boolean-help {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .boolean-help ul {
+            margin: 8px 0 0 0;
+            padding-left: 15px;
+        }
+        
+        .boolean-help li {
+            margin-bottom: 3px;
+            font-size: 12px;
+        }
+        
+        .query-visualization {
+            background-color: white;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            min-height: 40px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #495057;
+        }
+        
+        .query-visualization .empty-query {
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .query-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-add-term, .btn-add-group, .btn-clear {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: 1px solid #007bff;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-add-term {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .btn-add-term:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .btn-add-group {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-add-group:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        
+        .btn-clear {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .btn-clear:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        
+        .boolean-query-items {
+            min-height: 80px;
+        }
+        
+        .query-item {
+            background-color: white;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .query-item.group {
+            border-left: 3px solid #007bff;
+            background-color: #f8f9ff;
+        }
+        
+        .query-item.term {
+            border-left: 3px solid #28a745;
+            background-color: #f8fff9;
+        }
+        
+        .query-item .item-type {
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            color: white;
+        }
+        
+        .query-item.group .item-type {
+            background-color: #007bff;
+        }
+        
+        .query-item.term .item-type {
+            background-color: #28a745;
+        }
+        
+        .query-item .operator-toggle {
+            display: inline-block;
+            min-width: 60px;
+        }
+        
+        .query-item .operator-btn {
+            padding: 4px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            background-color: #f8f9fa;
+            color: #495057;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .query-item .operator-btn:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        .query-item .operator-btn.active-and {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .query-item .operator-btn.active-and:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        
+        .query-item .operator-btn.active-or {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .query-item .operator-btn.active-or:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .query-item .term-input {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            font-size: 12px;
+            min-width: 150px;
+        }
+        
+        .query-item .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .query-item .remove-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .query-item .group-content {
+            width: 100%;
+            margin-top: 8px;
+            padding-left: 15px;
+            border-left: 2px solid #dee2e6;
+        }
+        
+        .query-item .group-controls {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        
+        .query-item .group-controls button {
+            padding: 3px 6px;
+            font-size: 10px;
+            border: 1px solid #6c757d;
+            border-radius: 3px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        
+        .query-item .group-controls button:hover {
+            background-color: #e9ecef;
+        }
+        
+        /* API Info Styles */
+        .api-info {
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .api-info h3 {
+            margin-top: 0;
+            color: #007bff;
+            font-size: 14px;
+        }
+        
+        .api-info p {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
+        /* Article Preview Panel */
+        .article-preview-panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            height: 100%;
+            overflow-y: auto;
+        }
+        
+        .article-preview-panel h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 10px;
+        }
+        
+        .article-list {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        .article-item {
+            background-color: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .article-item:hover {
+            background-color: #e9ecef;
+            transform: translateX(2px);
+        }
+        
+        .article-item h4 {
+            margin: 0 0 8px 0;
+            color: #333;
+            font-size: 14px;
+            line-height: 1.3;
+        }
+        
+        .article-item .meta {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .article-item .excerpt {
+            font-size: 12px;
+            color: #555;
+            line-height: 1.4;
+            max-height: 60px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+        
+        .article-item .source {
+            font-size: 11px;
+            color: #007bff;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+        
+        .no-articles {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px 20px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+                height: auto;
+                overflow-y: auto;
+            }
+            
+            .left-panel, .right-panel {
+                flex: none;
+            }
+            
+            .article-preview-panel {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Left Panel -->
+        <div class="left-panel">
+            <!-- Request Builder Section -->
+            <div class="container">
+                <h1><%= pageTitle %></h1>
+                
+                <div class="section">
+                    <h3>Search Terms</h3>
+                    <div class="search-mode-toggle">
+                        <label>
+                            <input type="radio" name="searchMode" value="custom" checked onchange="toggleSearchMode()">
+                            Custom Boolean Search
+                        </label>
+                        <label>
+                            <input type="radio" name="searchMode" value="builder" onchange="toggleSearchMode()">
+                            Visual Boolean Builder
+                        </label>
+                    </div>
+                    
+                    <!-- Custom Boolean Search Mode -->
+                    <div id="customSearchMode" class="search-mode">
+                        <div class="form-group">
+                            <label for="customBooleanQuery">Custom Boolean Query:</label>
+                            <textarea id="customBooleanQuery" rows="3" placeholder="Enter your boolean search query here, e.g.:&#10;(&quot;COP30&quot; OR &quot;Brazil&quot;) AND &quot;climate&quot;&#10;&#10;Supported operators: AND, OR&#10;Use quotes around search terms&#10;Use parentheses for grouping"></textarea>
+                            <small>Enter boolean search terms using AND, OR operators. Use quotes around search terms and parentheses for grouping.</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Boolean Search Mode -->
+                    <div id="booleanSearchMode" class="search-mode" style="display: none;">
+                        <div class="boolean-search-container">
+                            <div class="boolean-help">
+                                <strong>Boolean Search Help:</strong>
+                                <ul>
+                                    <li><strong>AND</strong> - Both terms must be present</li>
+                                    <li><strong>OR</strong> - Either term can be present</li>
+                                    <li><strong>Parentheses</strong> - Group terms for complex logic</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="boolean-query-builder">
+                                <div class="query-visualization" id="queryVisualization">
+                                    <div class="empty-query">Start building your boolean query below</div>
+                                </div>
+                                
+                                <div class="query-controls">
+                                    <button type="button" onclick="addBooleanTerm()" class="btn-add-term">+ Add Term</button>
+                                    <button type="button" onclick="addBooleanGroup()" class="btn-add-group">+ Add Group</button>
+                                    <button type="button" onclick="clearBooleanQuery()" class="btn-clear">Clear All</button>
+                                </div>
+                                
+                                <div class="boolean-query-items" id="booleanQueryItems">
+                                    <!-- Boolean query items will be added here dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Date Range</h3>
+                    <div class="date-range">
+                        <div class="form-group">
+                            <label for="startDate">Start Date:</label>
+                            <input type="date" id="startDate" value="2025-08-25">
+                        </div>
+                        <div class="form-group">
+                            <label for="endDate">End Date:</label>
+                            <input type="date" id="endDate" value="2025-09-18">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Google Sheets Configuration</h3>
+                    <div class="form-group">
+                        <label for="serviceAccountKey">Service Account Key File:</label>
+                        <input type="file" id="serviceAccountKey" accept=".json" onchange="loadServiceAccountKey()" />
+                        <small>Select your service-account-key.json file to access Google Sheets</small>
+                    </div>
+                    <div id="sheetsStatus"></div>
+                </div>
+
+                <div class="section">
+                    <h3>Sources Selection</h3>
+                    <div class="form-group">
+                        <label>Available Sources (from Google Sheets):</label>
+                        <div class="select-all-controls">
+                            <button type="button" onclick="selectAllSources()">Select All</button>
+                            <button type="button" onclick="deselectAllSources()">Deselect All</button>
+                            <button type="button" onclick="loadSourcesFromSheet()">Refresh Sources</button>
+                        </div>
+                        
+                        <!-- Filter Controls -->
+                        <div class="filter-controls" id="filterControls" style="display: none;">
+                            <h4>Filter Sources:</h4>
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label for="regionFilter">Region:</label>
+                                    <select id="regionFilter" onchange="applyFilters()">
+                                        <option value="">All Regions</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="countryFilter">Country:</label>
+                                    <select id="countryFilter" onchange="applyFilters()">
+                                        <option value="">All Countries</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="languageFilter">Language:</label>
+                                    <select id="languageFilter" onchange="applyFilters()">
+                                        <option value="">All Languages</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <button type="button" onclick="clearFilters()" class="btn-secondary">Clear Filters</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="sources-list" id="sourcesList">
+                            <div class="info">Load your service account key first, then click "Refresh Sources" to load sources from Google Sheets</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button onclick="buildRequest()">Build Request</button>
+                    <button onclick="previewRequest()" class="btn-secondary">Preview JSON</button>
+                    <button onclick="submitRequest()" class="btn-success">Submit Request</button>
+                    <button onclick="clearForm()">Clear Form</button>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p id="loadingText">Processing...</p>
+                </div>
+
+                <div class="results" id="results"></div>
+            </div>
+
+            <!-- Event Registry API Section -->
+            <div class="container">
+                <h2>Event Registry API</h2>
+                
+                <div class="api-info">
+                    <h3>Manual Request Configuration</h3>
+                    <p><strong>Instructions:</strong> Paste your Event Registry API request body below in JSON format</p>
+                    <p><strong>Note:</strong> The request will be sent as-is to the Event Registry API</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="requestBody">Event Registry Request Body (JSON):</label>
+                    <textarea id="requestBody" rows="8" placeholder='Paste your Event Registry API request body here in JSON format, for example:
+{
+  "query": {
+    "$query": {
+      "$and": [
+        {
+          "conceptUri": "http://en.wikipedia.org/wiki/Climate_change"
+        },
+        {
+          "dateStart": "2024-01-01",
+          "dateEnd": "2024-01-31"
+        }
+      ]
+    }
+  },
+  "resultType": "articles",
+  "articlesPage": 1,
+  "articlesCount": 100,
+  "articlesSortBy": "date",
+  "apiKey": "your-api-key-here"
+}'></textarea>
+                    <small>Enter the complete JSON request body that will be sent to the Event Registry API</small>
+                </div>
+                
+                <div class="button-group">
+                    <button id="fetchArticles" onclick="fetchArticles()">Fetch Articles (Manual Request)</button>
+                    <button id="fetchArticlesAndWriteToSheets" onclick="fetchArticlesAndWriteToSheets()">Fetch & Write to Sheets</button>
+                    <button id="testSheetsConnection" onclick="testSheetsConnection()">Test Sheets Connection</button>
+                    <button id="validateRequest" onclick="validateRequest()">Validate Request Body</button>
+                    <button id="clearRequest" onclick="clearRequest()">Clear Request Body</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Article Preview -->
+        <div class="right-panel">
+            <div class="article-preview-panel">
+                <h2>Article Preview</h2>
+                <div class="stats" id="articleStats">
+                    No articles loaded yet. Use the request builder or manual API to fetch articles.
+                </div>
+                <div class="article-list" id="articleList">
+                    <div class="no-articles">
+                        No articles to display. Submit a request to see articles here.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External JavaScript files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsrsasign/10.5.25/jsrsasign-all-min.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/api-client.js"></script>
+    <script src="/js/sheets-api.js"></script>
+    <script src="/js/request-builder.js"></script>
+    <script src="/js/event-registry-api-express.js"></script>
+    <script src="/js/source-based-api.js"></script>
+    <script src="/js/main.js"></script>
+    
+    <script>
+        // Global variables for article management
+        let currentArticles = [];
+        let articlePreviewPanel = null;
+        
+        // Initialize the interface
+        document.addEventListener('DOMContentLoaded', function() {
+            articlePreviewPanel = new ArticlePreviewPanel();
+        });
+        
+        // Article Preview Panel Class
+        class ArticlePreviewPanel {
+            constructor() {
+                this.articleListElement = document.getElementById('articleList');
+                this.articleStatsElement = document.getElementById('articleStats');
+                this.currentArticles = [];
+            }
+            
+            updateArticles(articles) {
+                this.currentArticles = articles || [];
+                this.renderArticles();
+                this.updateStats();
+            }
+            
+            renderArticles() {
+                if (!this.currentArticles || this.currentArticles.length === 0) {
+                    this.articleListElement.innerHTML = '<div class="no-articles">No articles to display. Submit a request to see articles here.</div>';
+                    return;
+                }
+                
+                const articlesHtml = this.currentArticles.map((article, index) => {
+                    const title = article.title || 'Untitled Article';
+                    const source = article.source?.title || 'Unknown Source';
+                    const publishedDate = article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'Unknown Date';
+                    const excerpt = article.body ? article.body.substring(0, 200) + '...' : 'No content available';
+                    
+                    return `
+                        <div class="article-item" onclick="articlePreviewPanel.showArticleDetails(${index})">
+                            <h4>${title}</h4>
+                            <div class="meta">${source} • ${publishedDate}</div>
+                            <div class="excerpt">${excerpt}</div>
+                            <div class="source">Source: ${source}</div>
+                        </div>
+                    `;
+                }).join('');
+                
+                this.articleListElement.innerHTML = articlesHtml;
+            }
+            
+            updateStats() {
+                const count = this.currentArticles.length;
+                if (count === 0) {
+                    this.articleStatsElement.textContent = 'No articles loaded yet. Use the request builder or manual API to fetch articles.';
+                } else {
+                    this.articleStatsElement.textContent = `Showing ${count} article${count !== 1 ? 's' : ''}`;
+                }
+            }
+            
+            showArticleDetails(index) {
+                const article = this.currentArticles[index];
+                if (!article) return;
+                
+                // Create a modal or detailed view
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(0,0,0,0.5);
+                    z-index: 1000;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                `;
+                
+                const content = document.createElement('div');
+                content.style.cssText = `
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    max-width: 80%;
+                    max-height: 80%;
+                    overflow-y: auto;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                `;
+                
+                content.innerHTML = `
+                    <h3>${article.title || 'Untitled Article'}</h3>
+                    <div class="article-meta">
+                        <strong>Source:</strong> ${article.source?.title || 'Unknown'}<br>
+                        <strong>Published:</strong> ${article.publishedAt ? new Date(article.publishedAt).toLocaleString() : 'Unknown'}<br>
+                        <strong>URL:</strong> <a href="${article.url}" target="_blank">${article.url}</a>
+                    </div>
+                    <div class="article-body">${article.body || 'No content available'}</div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="margin-top: 15px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+                `;
+                
+                modal.appendChild(content);
+                document.body.appendChild(modal);
+                
+                // Close on background click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+            }
+        }
+        
+        // Override the existing functions to update the preview panel
+        const originalFetchArticles = window.fetchArticles;
+        const originalSubmitRequest = window.submitRequest;
+        
+        window.fetchArticles = function() {
+            showPreviewLoading('Fetching articles from Event Registry...');
+            if (originalFetchArticles) {
+                originalFetchArticles.apply(this, arguments);
+            }
+        };
+        
+        window.submitRequest = function() {
+            showPreviewLoading('Submitting request to Event Registry API...');
+            if (originalSubmitRequest) {
+                originalSubmitRequest.apply(this, arguments);
+            }
+        };
+        
+        // Function to update articles in preview panel (called by other scripts)
+        function updateArticlePreview(articles) {
+            if (articlePreviewPanel) {
+                articlePreviewPanel.updateArticles(articles);
+            }
+        }
+        
+        // Function to show loading state in preview panel
+        function showPreviewLoading(message) {
+            if (articlePreviewPanel) {
+                articlePreviewPanel.articleListElement.innerHTML = `
+                    <div class="loading" style="display: block;">
+                        <div class="spinner"></div>
+                        <p>${message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Function to show error in preview panel
+        function showPreviewError(message) {
+            if (articlePreviewPanel) {
+                articlePreviewPanel.articleListElement.innerHTML = `
+                    <div class="error">${message}</div>
+                `;
+            }
+        }
+        
+        // Function to clear preview panel
+        function clearPreviewPanel() {
+            if (articlePreviewPanel) {
+                articlePreviewPanel.updateArticles([]);
+            }
+        }
+        
+        // Override clear functions to also clear preview panel
+        const originalClearForm = window.clearForm;
+        const originalClearRequest = window.clearRequest;
+        
+        window.clearForm = function() {
+            clearPreviewPanel();
+            if (originalClearForm) {
+                originalClearForm.apply(this, arguments);
+            }
+        };
+        
+        window.clearRequest = function() {
+            clearPreviewPanel();
+            if (originalClearRequest) {
+                originalClearRequest.apply(this, arguments);
+            }
+        };
+    </script>
+</body>
+</html>

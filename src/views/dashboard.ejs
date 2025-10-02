@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsHub</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            padding: 40px 20px; 
+        }
+        .header {
+            text-align: left;
+            margin-bottom: 40px;
+        }
+        .header h1 { 
+            color: #2c3e50; 
+            font-size: 2.5rem; 
+            font-weight: 700; 
+            margin: 0;
+        }
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .project-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: all 0.3s ease;
+            border: 2px solid #e0e0e0;
+            position: relative;
+            overflow: hidden;
+            min-height: 100px;
+        }
+        .project-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        .new-project-card {
+            background: #34495e;
+            color: white;
+            border: 2px solid #2c3e50;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+        }
+        .new-project-card:hover {
+            background: #2c3e50;
+        }
+        .new-project-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+        .new-project-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .project-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 8px 0;
+            text-decoration: none;
+            display: block;
+        }
+        .project-title:hover {
+            color: #34495e;
+        }
+        .project-meta {
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            margin: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .project-stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #ecf0f1;
+        }
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        .stat-number {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #34495e;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            margin-top: 2px;
+        }
+        .sheet-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: #34495e;
+            border: 1px solid #2c3e50;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .sheet-link:hover {
+            background: #2c3e50;
+            color: white;
+        }
+        .create-form {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .create-form.show {
+            display: flex;
+        }
+        .form-modal {
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+        }
+        .form-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin: 0 0 24px 0;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e8ecf0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.2s ease;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #34495e;
+        }
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        .btn {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-primary {
+            background: #34495e;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2c3e50;
+        }
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>NewsHub</h1>
+        </div>
+
+        <div class="projects-grid">
+            <!-- New Project Card -->
+            <div class="project-card new-project-card" onclick="showCreateForm()">
+                <div class="new-project-icon">+</div>
+                <div class="new-project-text">Create New Project</div>
+            </div>
+
+            <!-- Existing Projects -->
+            <% if (projects.length > 0) { %>
+                <% projects.forEach(project => { %>
+                    <div class="project-card">
+                        <a href="/<%= project.id %>" class="project-title"><%= project.name %></a>
+                        <div class="project-meta">
+                            <%= new Date(project.createdAt).toLocaleDateString() %>
+                        </div>
+                        <div class="project-stats">
+                            <div class="stat">
+                                <div class="stat-number"><%= project.articles ? project.articles.length : 0 %></div>
+                                <div class="stat-label">Articles</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-number"><%= project.analysisRuns ? project.analysisRuns.length : 0 %></div>
+                                <div class="stat-label">Analyses</div>
+                            </div>
+                        </div>
+                        <% if (project.sheetUrl) { %>
+                            <a href="<%= project.sheetUrl %>" target="_blank" rel="noreferrer" class="sheet-link">
+                                View Database
+                            </a>
+                        <% } %>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="empty-state">
+                    <p>No projects yet. Click the + button to create your first project!</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div class="create-form" id="createForm">
+        <div class="form-modal">
+            <h3 class="form-title">Create New Project</h3>
+            <form id="createProjectForm">
+                <div class="form-group">
+                    <label for="projectName">Project Name</label>
+                    <input type="text" id="projectName" placeholder="Enter project name" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateForm()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="createBtn">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function showCreateForm() {
+            document.getElementById('createForm').classList.add('show');
+            document.getElementById('projectName').focus();
+        }
+
+        function hideCreateForm() {
+            document.getElementById('createForm').classList.remove('show');
+            document.getElementById('projectName').value = '';
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('createForm').addEventListener('click', (e) => {
+            if (e.target.id === 'createForm') {
+                hideCreateForm();
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('createProjectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('projectName').value;
+            const btn = document.getElementById('createBtn');
+            
+            if (!name) return;
+            
+            btn.textContent = 'Creating...';
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/projects/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    alert('✅ Project database created successfully!');
+                    window.location.href = `/${data.project.id}`;
+                } else {
+                    const err = await res.json();
+                    alert(err.message || 'Failed to create project');
+                }
+            } catch (error) {
+                alert('Failed to create project');
+            } finally {
+                btn.textContent = 'Create Project';
+                btn.disabled = false;
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideCreateForm();
+            }
+        });
+    </script>
+</body>
+</html>
