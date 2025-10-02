@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 // Import routes
 import projectRoutes from './routes/projects';
 import apiRoutes from './routes/api';
+import { projectCache } from './lib/cache';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,6 +37,15 @@ app.use((req: express.Request, res: express.Response) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
+  
+  // Initialize cache on startup
+  console.log('🔄 Initializing project cache...');
+  try {
+    await projectCache.syncAll();
+    console.log('✅ Cache initialization complete');
+  } catch (error) {
+    console.error('❌ Cache initialization failed:', error);
+  }
 });

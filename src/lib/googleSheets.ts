@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { FOLDER_IDS } from '../config/folders';
 
 type DuplicateResult = { sheetId: string; webViewLink?: string | null };
 
@@ -32,11 +33,15 @@ export async function duplicateMasterSheet(newTitle: string): Promise<DuplicateR
 
   console.log(`Creating new sheet copy: "${newTitle}" from master sheet: ${masterId}`);
 
+  // Get the Projects folder ID
+  console.log(`Using Projects folder ID: ${FOLDER_IDS.PROJECTS}`);
+
   // files.copy - this creates a complete copy of the master spreadsheet
   const copyRes = await drive.files.copy({
     fileId: masterId,
     requestBody: {
       name: newTitle,
+      parents: [FOLDER_IDS.PROJECTS], // Place in Projects folder
     },
     fields: 'id, webViewLink, name',
   });

@@ -28,4 +28,5 @@ export type Project = {
   articles: Article[];
   analysisRuns: AnalysisRun[];
   meta?: any;
+  archivedAt?: string;   // timestamp when project was archived
 };

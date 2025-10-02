@@ -1,18 +1,19 @@
 import express from 'express';
-import { listProjects, getProject, saveProject } from '../lib/db';
+import { listProjects, getProject, saveProject, initializeProjects, archiveProject } from '../lib/db';
 import { makeSlug } from '../lib/slug';
 import { duplicateMasterSheet } from '../lib/googleSheets';
 import { runRunchat } from '../lib/runchat';
 import { writeAnalysisToSheet } from '../lib/googleSheets';
 import { nanoid } from 'nanoid';
 import { Project } from '../types/project';
+import { projectCache } from '../lib/cache';
 
 const router = express.Router();
 
 // API: List projects (converted from pages/api/projects/list.ts)
 router.get('/projects/list', async (req: express.Request, res: express.Response) => {
   try {
-    const projects = await listProjects();
+    const projects = await initializeProjects();
     res.json({ projects });
   } catch (err: any) {
     console.error('list projects error', err);
@@ -50,6 +51,9 @@ router.post('/projects/create', async (req: express.Request, res: express.Respon
     };
 
     await saveProject(project);
+
+    // Sync cache after creating project
+    await projectCache.syncProjects();
 
     res.status(201).json({ project });
   } catch (err: any) {
@@ -200,5 +204,58 @@ router.post('/projects/:slug/run-analysis', async (req: express.Request, res: ex
     res.status(500).json({ message: err.message || 'Internal server error' });
   }
 });
+
+// API: Archive project
+router.post('/projects/:slug/archive', async (req: express.Request, res: express.Response) => {
+  try {
+    const { slug } = req.params;
+    
+    await archiveProject(slug);
+    
+    // Sync cache after archiving project
+    await projectCache.syncAll();
+    
+    res.json({ message: 'Project archived successfully' });
+  } catch (err: any) {
+    console.error('archive project error', err);
+    res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+});
+
+// API: Restore project from archive
+router.post('/archive/:projectId/restore', async (req: express.Request, res: express.Response) => {
+  try {
+    const { projectId } = req.params;
+    
+    // Import the restore function (we'll implement this)
+    const { restoreProjectFromArchive } = await import('../lib/googleDriveStorage');
+    
+    await restoreProjectFromArchive(projectId);
+    
+    // Sync cache after restoring project
+    await projectCache.syncAll();
+    
+    res.json({ message: 'Project restored successfully' });
+  } catch (err: any) {
+    console.error('restore project error', err);
+    res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+});
+
+// API: Manual sync
+router.post('/sync', async (req: express.Request, res: express.Response) => {
+  try {
+    await projectCache.syncAll();
+    const syncStatus = projectCache.getSyncStatus();
+    res.json({ 
+      message: 'Sync completed successfully',
+      syncStatus
+    });
+  } catch (err: any) {
+    console.error('manual sync error', err);
+    res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+});
+
 
 export default router;
