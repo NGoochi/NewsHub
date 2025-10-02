@@ -3,7 +3,7 @@ import { FOLDER_IDS } from '../config/folders';
 
 type DuplicateResult = { sheetId: string; webViewLink?: string | null };
 
-async function getAuthClient() {
+export async function getAuthClient() {
   // Use OAuth2 with your personal Google account
   const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
   

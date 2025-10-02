@@ -6,7 +6,9 @@
     <title><%= project.name %></title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 24px; background: #f5f5f5; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 24px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; gap: 24px; }
+        .main-content { flex: 1; }
+        .sidebar { width: 350px; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #e9ecef; }
         .header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; }
         .header h1 { margin: 0; color: #333; }
         .header p { color: #666; margin: 4px 0 0 0; }
@@ -23,13 +25,521 @@
         .status-pending { background-color: #f8d7da; color: #721c24; }
         .form-section { padding: 16px; border: 1px solid #ddd; border-radius: 8px; margin-top: 24px; }
         .form-group { margin-bottom: 12px; }
-        input, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        input, textarea, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
         textarea { min-height: 80px; }
         .loading { opacity: 0.5; }
+        .sidebar h3 { margin-top: 0; color: #333; border-bottom: 2px solid #0070f3; padding-bottom: 8px; }
+        .event-registry-panel { margin-bottom: 24px; }
+        .search-mode-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+        .search-mode-toggle input[type="radio"] { width: auto; margin-right: 4px; }
+        .search-mode-toggle label { display: flex; align-items: center; cursor: pointer; }
+        .boolean-query-section { margin-top: 16px; }
+        .boolean-query-section textarea { min-height: 120px; font-family: monospace; }
+        .sources-section { margin-top: 16px; }
+        
+        /* Filter Controls */
+        .filter-controls {
+            background-color: #f8f9fa;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+            margin-bottom: 12px;
+        }
+        
+        .filter-controls h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #495057;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 120px;
+        }
+        
+        .filter-group label {
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 12px;
+            color: #333;
+        }
+        
+        .filter-group select {
+            padding: 6px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            font-size: 12px;
+            background-color: white;
+        }
+        
+        .filter-group button {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-top: 8px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .filter-group button:hover {
+            background-color: #545b62;
+        }
+        
+        .select-all-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        
+        .select-all-controls button {
+            padding: 6px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .select-all-controls button:hover {
+            background-color: #e9ecef;
+        }
+        
+        .sources-summary {
+            background-color: #e9ecef;
+            padding: 6px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #495057;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .sources-list { max-height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 8px; background: white; }
+        .source-item { display: flex; align-items: center; margin-bottom: 8px; }
+        .source-item input[type="checkbox"] { width: auto; margin-right: 8px; }
+        .source-item label { cursor: pointer; flex: 1; }
+        .source-meta { font-size: 0.8em; color: #666; margin-top: 2px; }
+        
+        /* Source meta styling */
+        .source-title {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .source-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        
+        .source-meta span {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1px 6px;
+            font-size: 10px;
+            color: #495057;
+        }
+        
+        .source-region {
+            background-color: #e3f2fd !important;
+            border-color: #bbdefb !important;
+            color: #1565c0 !important;
+        }
+        
+        .source-country {
+            background-color: #f3e5f5 !important;
+            border-color: #e1bee7 !important;
+            color: #7b1fa2 !important;
+        }
+        
+        .source-language {
+            background-color: #e8f5e8 !important;
+            border-color: #c8e6c9 !important;
+            color: #2e7d32 !important;
+        }
+        .date-range { display: flex; gap: 8px; }
+        .date-range input { flex: 1; }
+        .action-buttons { display: flex; gap: 8px; margin-top: 16px; }
+        .action-buttons button { flex: 1; }
+        .loading-spinner { display: none; text-align: center; padding: 20px; }
+        .loading-spinner.show { display: block; }
+        .error { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin: 12px 0; }
+        .success { background: #d4edda; color: #155724; padding: 12px; border-radius: 4px; margin: 12px 0; }
+        .info { background: #d1ecf1; color: #0c5460; padding: 12px; border-radius: 4px; margin: 12px 0; }
+        
+        /* Boolean Query Builder Styles */
+        .boolean-search-container {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .boolean-help {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 3px solid #007bff;
+        }
+        
+        .boolean-help ul {
+            margin: 8px 0 0 0;
+            padding-left: 15px;
+        }
+        
+        .boolean-help li {
+            margin-bottom: 3px;
+            font-size: 12px;
+        }
+        
+        .query-visualization {
+            background-color: white;
+            border: 2px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            min-height: 40px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #495057;
+        }
+        
+        .query-visualization .empty-query {
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .query-controls {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-add-term, .btn-add-group, .btn-clear {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: 1px solid #007bff;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-add-term {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .btn-add-term:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .btn-add-group {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-add-group:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+        
+        .btn-clear {
+            background-color: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+        
+        .btn-clear:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+        
+        .boolean-query-items {
+            min-height: 80px;
+        }
+        
+        .query-item {
+            background-color: white;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .query-item.group {
+            border-left: 3px solid #007bff;
+            background-color: #f8f9ff;
+        }
+        
+        .query-item.term {
+            border-left: 3px solid #28a745;
+            background-color: #f8fff9;
+        }
+        
+        .query-item .item-type {
+            font-weight: bold;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            color: white;
+        }
+        
+        .query-item.group .item-type {
+            background-color: #007bff;
+        }
+        
+        .query-item.term .item-type {
+            background-color: #28a745;
+        }
+        
+        .query-item .operator-toggle {
+            display: inline-block;
+            min-width: 60px;
+        }
+        
+        .query-item .operator-btn {
+            padding: 4px 8px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            background-color: #f8f9fa;
+            color: #495057;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .query-item .operator-btn:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+        
+        .query-item .operator-btn.active-and {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .query-item .operator-btn.active-and:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+        
+        .query-item .operator-btn.active-or {
+            background-color: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+        
+        .query-item .operator-btn.active-or:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        
+        .query-item .term-input {
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            font-size: 12px;
+            min-width: 150px;
+        }
+        
+        .query-item .remove-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        .query-item .remove-btn:hover {
+            background-color: #c82333;
+        }
+        
+        .query-item .group-content {
+            width: 100%;
+            margin-top: 8px;
+            padding-left: 15px;
+            border-left: 2px solid #dee2e6;
+        }
+        
+        .query-item .group-controls {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        
+        .query-item .group-controls button {
+            padding: 3px 6px;
+            font-size: 10px;
+            border: 1px solid #6c757d;
+            border-radius: 3px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        
+        .query-item .group-controls button:hover {
+            background-color: #e9ecef;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h3>Event Registry</h3>
+            <div class="event-registry-panel">
+                <!-- Search Mode Toggle -->
+                <div class="search-mode-toggle">
+                    <label>
+                        <input type="radio" name="searchMode" value="simple" checked>
+                        Simple Search
+                    </label>
+                    <label>
+                        <input type="radio" name="searchMode" value="boolean">
+                        Boolean Query
+                    </label>
+                </div>
+
+                <!-- Simple Search Terms -->
+                <div id="simpleSearchMode">
+                    <div class="form-group">
+                        <label>Search Terms (one per line):</label>
+                        <textarea id="searchTerms" placeholder="Enter search terms, one per line"></textarea>
+                    </div>
+                </div>
+
+                <!-- Boolean Query Builder -->
+                <div id="booleanSearchMode" style="display: none;">
+                    <div class="boolean-search-container">
+                        <div class="boolean-help">
+                            <strong>Boolean Search Help:</strong>
+                            <ul>
+                                <li><strong>AND</strong> - Both terms must be present</li>
+                                <li><strong>OR</strong> - Either term can be present</li>
+                                <li><strong>Parentheses</strong> - Group terms for complex logic</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="boolean-query-builder">
+                            <div class="query-visualization" id="queryVisualization">
+                                <div class="empty-query">Start building your boolean query below</div>
+                            </div>
+                            
+                            <div class="query-controls">
+                                <button type="button" onclick="addBooleanTerm()" class="btn-add-term">+ Add Term</button>
+                                <button type="button" onclick="addBooleanGroup()" class="btn-add-group">+ Add Group</button>
+                                <button type="button" onclick="clearBooleanQuery()" class="btn-clear">Clear All</button>
+                            </div>
+                            
+                            <div class="boolean-query-items" id="booleanQueryItems">
+                                <!-- Boolean query items will be added here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sources Selection -->
+                <div class="sources-section">
+                    <div class="form-group">
+                        <label>Sources:</label>
+                        <button type="button" onclick="loadSources()" class="btn btn-secondary">Load Sources</button>
+                        
+                        <!-- Filter Controls -->
+                        <div class="filter-controls" id="filterControls" style="display: none;">
+                            <h4>Filter Sources:</h4>
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label for="regionFilter">Region:</label>
+                                    <select id="regionFilter" onchange="applyFilters()">
+                                        <option value="">All Regions</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="countryFilter">Country:</label>
+                                    <select id="countryFilter" onchange="applyFilters()">
+                                        <option value="">All Countries</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label for="languageFilter">Language:</label>
+                                    <select id="languageFilter" onchange="applyFilters()">
+                                        <option value="">All Languages</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <button type="button" onclick="clearFilters()">Clear Filters</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Select All Controls -->
+                        <div class="select-all-controls" id="selectAllControls" style="display: none;">
+                            <button type="button" onclick="selectAllSources()">Select All</button>
+                            <button type="button" onclick="deselectAllSources()">Deselect All</button>
+                        </div>
+                        
+                        <div class="sources-list" id="sourcesList">
+                            <div class="info">Click "Load Sources" to load available sources</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date Range -->
+                <div class="form-group">
+                    <label>Date Range:</label>
+                    <div class="date-range">
+                        <input type="date" id="startDate" required>
+                        <input type="date" id="endDate" required>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button type="button" onclick="fetchArticles()" class="btn btn-primary">Fetch Articles</button>
+                    <button type="button" onclick="writeToSheet()" class="btn btn-success" id="writeToSheetBtn" disabled>Write to Sheet</button>
+                </div>
+
+                <!-- Loading Spinner -->
+                <div class="loading-spinner" id="loadingSpinner">
+                    <div>Loading...</div>
+                </div>
+
+                <!-- Results -->
+                <div id="eventRegistryResults"></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
         <div class="header">
             <div>
                 <h1><%= project.name %></h1>
@@ -87,24 +597,638 @@
             <% } %>
         </section>
 
-        <div class="form-section">
-            <h3>Add Article (Manual)</h3>
-            <form id="addArticleForm">
-                <div class="form-group">
-                    <input type="text" id="articleTitle" placeholder="Article Title *" required>
-                </div>
-                <div class="form-group">
-                    <input type="url" id="articleUrl" placeholder="URL (optional)">
-                </div>
-                <div class="form-group">
-                    <textarea id="articleContent" placeholder="Content (optional)"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Add Article</button>
-            </form>
+            <div class="form-section">
+                <h3>Add Article (Manual)</h3>
+                <form id="addArticleForm">
+                    <div class="form-group">
+                        <input type="text" id="articleTitle" placeholder="Article Title *" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="url" id="articleUrl" placeholder="URL (optional)">
+                    </div>
+                    <div class="form-group">
+                        <textarea id="articleContent" placeholder="Content (optional)"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Article</button>
+                </form>
+            </div>
         </div>
     </div>
 
     <script>
+        // Event Registry functionality
+        let eventRegistrySources = [];
+        let fetchedArticles = [];
+
+        // Search mode toggle
+        document.querySelectorAll('input[name="searchMode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const simpleMode = document.getElementById('simpleSearchMode');
+                const booleanMode = document.getElementById('booleanSearchMode');
+                
+                if (this.value === 'simple') {
+                    simpleMode.style.display = 'block';
+                    booleanMode.style.display = 'none';
+                } else {
+                    simpleMode.style.display = 'none';
+                    booleanMode.style.display = 'block';
+                }
+            });
+        });
+
+        // Boolean Query Builder Functions
+        function addBooleanTerm() {
+            const container = document.getElementById('booleanQueryItems');
+            const termId = 'term_' + Date.now();
+            
+            const termHtml = `
+                <div class="query-item term" data-id="${termId}">
+                    <span class="item-type">TERM</span>
+                    <div class="operator-toggle">
+                        <button type="button" class="operator-btn active-and" data-operator="AND" onclick="toggleOperator('${termId}')">AND</button>
+                    </div>
+                    <input type="text" class="term-input" placeholder="Enter search term" onchange="updateQueryVisualization()" onkeyup="updateQueryVisualization()">
+                    <button type="button" class="remove-btn" onclick="removeQueryItem('${termId}')">Remove</button>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', termHtml);
+            updateQueryVisualization();
+        }
+
+        function addBooleanGroup() {
+            const container = document.getElementById('booleanQueryItems');
+            const groupId = 'group_' + Date.now();
+            
+            const groupHtml = `
+                <div class="query-item group" data-id="${groupId}">
+                    <span class="item-type">GROUP</span>
+                    <div class="operator-toggle">
+                        <button type="button" class="operator-btn active-and" data-operator="AND" onclick="toggleOperator('${groupId}')">AND</button>
+                    </div>
+                    <button type="button" class="remove-btn" onclick="removeQueryItem('${groupId}')">Remove</button>
+                    
+                    <div class="group-content">
+                        <div class="group-controls">
+                            <button type="button" onclick="addBooleanTermToGroup('${groupId}')">+ Add Term</button>
+                            <button type="button" onclick="addBooleanGroupToGroup('${groupId}')">+ Add Group</button>
+                        </div>
+                        <div class="group-items" id="group_${groupId}_items">
+                            <!-- Group items will be added here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', groupHtml);
+            updateQueryVisualization();
+        }
+
+        function addBooleanTermToGroup(groupId) {
+            const groupItems = document.getElementById(`group_${groupId}_items`);
+            const termId = 'term_' + Date.now();
+            
+            const termHtml = `
+                <div class="query-item term" data-id="${termId}">
+                    <span class="item-type">TERM</span>
+                    <div class="operator-toggle">
+                        <button type="button" class="operator-btn active-and" data-operator="AND" onclick="toggleOperator('${termId}')">AND</button>
+                    </div>
+                    <input type="text" class="term-input" placeholder="Enter search term" onchange="updateQueryVisualization()" onkeyup="updateQueryVisualization()">
+                    <button type="button" class="remove-btn" onclick="removeQueryItem('${termId}')">Remove</button>
+                </div>
+            `;
+            
+            groupItems.insertAdjacentHTML('beforeend', termHtml);
+            updateQueryVisualization();
+        }
+
+        function addBooleanGroupToGroup(parentGroupId) {
+            const groupItems = document.getElementById(`group_${parentGroupId}_items`);
+            const groupId = 'group_' + Date.now();
+            
+            const groupHtml = `
+                <div class="query-item group" data-id="${groupId}">
+                    <span class="item-type">GROUP</span>
+                    <div class="operator-toggle">
+                        <button type="button" class="operator-btn active-and" data-operator="AND" onclick="toggleOperator('${groupId}')">AND</button>
+                    </div>
+                    <button type="button" class="remove-btn" onclick="removeQueryItem('${groupId}')">Remove</button>
+                    
+                    <div class="group-content">
+                        <div class="group-controls">
+                            <button type="button" onclick="addBooleanTermToGroup('${groupId}')">+ Add Term</button>
+                            <button type="button" onclick="addBooleanGroupToGroup('${groupId}')">+ Add Group</button>
+                        </div>
+                        <div class="group-items" id="group_${groupId}_items">
+                            <!-- Group items will be added here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            groupItems.insertAdjacentHTML('beforeend', groupHtml);
+            updateQueryVisualization();
+        }
+
+        function removeQueryItem(itemId) {
+            const item = document.querySelector(`[data-id="${itemId}"]`);
+            if (item) {
+                item.remove();
+                updateQueryVisualization();
+            }
+        }
+
+        function clearBooleanQuery() {
+            const container = document.getElementById('booleanQueryItems');
+            container.innerHTML = '';
+            updateQueryVisualization();
+        }
+
+        function toggleOperator(itemId) {
+            const item = document.querySelector(`[data-id="${itemId}"]`);
+            if (!item) return;
+            
+            const button = item.querySelector('.operator-btn');
+            if (!button) return;
+            
+            const currentOperator = button.dataset.operator;
+            
+            // Toggle between AND and OR
+            if (currentOperator === 'AND') {
+                button.textContent = 'OR';
+                button.dataset.operator = 'OR';
+                button.className = 'operator-btn active-or';
+            } else {
+                button.textContent = 'AND';
+                button.dataset.operator = 'AND';
+                button.className = 'operator-btn active-and';
+            }
+            
+            // Update the query visualization
+            updateQueryVisualization();
+        }
+
+        function updateQueryVisualization() {
+            const visualization = document.getElementById('queryVisualization');
+            const searchTerms = getBooleanSearchTerms();
+            
+            if (searchTerms.length === 0) {
+                visualization.innerHTML = '<div class="empty-query">Start building your boolean query below</div>';
+                return;
+            }
+            
+            // Convert boolean terms to readable string
+            const queryString = buildQueryString(searchTerms);
+            visualization.innerHTML = `<div class="query-string">${queryString}</div>`;
+        }
+
+        function getBooleanSearchTerms() {
+            const mainContainer = document.getElementById('booleanQueryItems');
+            if (!mainContainer) return [];
+            
+            const terms = [];
+            
+            // Only process direct children of the main container (not nested items)
+            const directItems = Array.from(mainContainer.children).filter(item => 
+                item.classList.contains('query-item')
+            );
+            
+            directItems.forEach(item => {
+                const type = item.classList.contains('group') ? 'group' : 'term';
+                const operator = item.querySelector('.operator-btn')?.dataset.operator || 'AND';
+                
+                if (type === 'term') {
+                    const input = item.querySelector('.term-input')?.value?.trim();
+                    if (input) {
+                        terms.push({
+                            type: 'term',
+                            operator: operator,
+                            value: input
+                        });
+                    }
+                } else if (type === 'group') {
+                    const groupTerms = getGroupTerms(item);
+                    if (groupTerms.length > 0) {
+                        terms.push({
+                            type: 'group',
+                            operator: operator,
+                            terms: groupTerms
+                        });
+                    }
+                }
+            });
+            
+            return terms;
+        }
+
+        function getGroupTerms(groupItem) {
+            const groupItems = groupItem.querySelector('.group-items');
+            if (!groupItems) return [];
+            
+            const terms = [];
+            
+            // Only process direct children of the group-items container
+            const directGroupItems = Array.from(groupItems.children).filter(item => 
+                item.classList.contains('query-item')
+            );
+            
+            directGroupItems.forEach(item => {
+                const type = item.classList.contains('group') ? 'group' : 'term';
+                const operator = item.querySelector('.operator-btn')?.dataset.operator || 'AND';
+                
+                if (type === 'term') {
+                    const input = item.querySelector('.term-input')?.value?.trim();
+                    if (input) {
+                        terms.push({
+                            type: 'term',
+                            operator: operator,
+                            value: input
+                        });
+                    }
+                } else if (type === 'group') {
+                    const nestedGroupTerms = getGroupTerms(item);
+                    if (nestedGroupTerms.length > 0) {
+                        terms.push({
+                            type: 'group',
+                            operator: operator,
+                            terms: nestedGroupTerms
+                        });
+                    }
+                }
+            });
+            
+            return terms;
+        }
+
+        function buildQueryString(terms) {
+            if (!terms || terms.length === 0) {
+                return '';
+            }
+            
+            let result = '';
+            
+            terms.forEach((term, index) => {
+                // Add operator before each term except the first one
+                if (index > 0) {
+                    result += ` ${term.operator} `;
+                }
+                
+                if (term.type === 'term') {
+                    result += `"${term.value}"`;
+                } else if (term.type === 'group') {
+                    const groupString = buildQueryString(term.terms);
+                    if (groupString) {
+                        result += `(${groupString})`;
+                    }
+                }
+            });
+            
+            return result;
+        }
+
+        // Global variables for filtering
+        let allSources = [];
+        let filteredSources = [];
+        let sourceFilters = { regions: [], countries: [], languages: [] };
+
+        // Load sources from Google Sheets
+        async function loadSources() {
+            const sourcesList = document.getElementById('sourcesList');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            loadingSpinner.classList.add('show');
+            sourcesList.innerHTML = '<div class="info">Loading sources...</div>';
+            
+            try {
+                const response = await fetch('/api/event-registry/sources');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    allSources = data.sources;
+                    filteredSources = [...allSources];
+                    sourceFilters = data.filters;
+                    eventRegistrySources = data.sources;
+                    
+                    // Populate filter dropdowns
+                    populateFilterDropdowns();
+                    
+                    // Show filter controls and select all controls
+                    document.getElementById('filterControls').style.display = 'block';
+                    document.getElementById('selectAllControls').style.display = 'flex';
+                    
+                    displaySources(filteredSources);
+                } else {
+                    sourcesList.innerHTML = `<div class="error">Error: ${data.message}</div>`;
+                }
+            } catch (error) {
+                sourcesList.innerHTML = `<div class="error">Error loading sources: ${error.message}</div>`;
+            } finally {
+                loadingSpinner.classList.remove('show');
+            }
+        }
+
+        // Display sources in the UI
+        function displaySources(sources) {
+            const sourcesList = document.getElementById('sourcesList');
+            
+            if (allSources.length === 0) {
+                sourcesList.innerHTML = '<div class="info">No sources available</div>';
+                return;
+            }
+
+            if (sources.length === 0) {
+                sourcesList.innerHTML = '<div class="info">No sources match the selected filters. Try adjusting your filter criteria.</div>';
+                return;
+            }
+
+            let html = `<div class="sources-summary">Showing ${sources.length} of ${allSources.length} sources</div>`;
+            
+            sources.forEach((source, index) => {
+                // Find the original index in the allSources array
+                const originalIndex = allSources.findIndex(s => s.title === source.title && s.uri === source.uri);
+                
+                html += `
+                    <div class="source-item">
+                        <input type="checkbox" 
+                               id="source_${originalIndex}" 
+                               ${source.selected ? 'checked' : ''}
+                               onchange="toggleSource(${originalIndex})">
+                        <label for="source_${originalIndex}">
+                            <div class="source-title">${source.title}</div>
+                            <div class="source-meta">
+                                ${source.region ? `<span class="source-region">${source.region}</span>` : ''}
+                                ${source.country ? `<span class="source-country">${source.country}</span>` : ''}
+                                ${source.language ? `<span class="source-language">${source.language}</span>` : ''}
+                            </div>
+                        </label>
+                    </div>
+                `;
+            });
+
+            sourcesList.innerHTML = html;
+        }
+
+        // Toggle source selection
+        function toggleSource(index) {
+            if (index >= 0 && index < allSources.length) {
+                allSources[index].selected = !allSources[index].selected;
+                // Update the filtered sources as well
+                const filteredIndex = filteredSources.findIndex(s => s.title === allSources[index].title && s.uri === allSources[index].uri);
+                if (filteredIndex >= 0) {
+                    filteredSources[filteredIndex].selected = allSources[index].selected;
+                }
+            }
+        }
+
+        // Populate filter dropdowns with unique values
+        function populateFilterDropdowns() {
+            const regionFilter = document.getElementById('regionFilter');
+            const countryFilter = document.getElementById('countryFilter');
+            const languageFilter = document.getElementById('languageFilter');
+
+            // Clear existing options (keep the "All" option)
+            regionFilter.innerHTML = '<option value="">All Regions</option>';
+            countryFilter.innerHTML = '<option value="">All Countries</option>';
+            languageFilter.innerHTML = '<option value="">All Languages</option>';
+
+            // Add region options
+            sourceFilters.regions.forEach(region => {
+                const option = document.createElement('option');
+                option.value = region;
+                option.textContent = region;
+                regionFilter.appendChild(option);
+            });
+
+            // Add country options
+            sourceFilters.countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countryFilter.appendChild(option);
+            });
+
+            // Add language options
+            sourceFilters.languages.forEach(language => {
+                const option = document.createElement('option');
+                option.value = language;
+                option.textContent = language;
+                languageFilter.appendChild(option);
+            });
+        }
+
+        // Apply filters to the sources list
+        function applyFilters() {
+            const regionFilter = document.getElementById('regionFilter').value;
+            const countryFilter = document.getElementById('countryFilter').value;
+            const languageFilter = document.getElementById('languageFilter').value;
+
+            // Filter sources based on selected criteria
+            filteredSources = allSources.filter(source => {
+                const regionMatch = !regionFilter || source.region === regionFilter;
+                const countryMatch = !countryFilter || source.country === countryFilter;
+                const languageMatch = !languageFilter || source.language === languageFilter;
+
+                return regionMatch && countryMatch && languageMatch;
+            });
+
+            // Update the display
+            displaySources(filteredSources);
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            document.getElementById('regionFilter').value = '';
+            document.getElementById('countryFilter').value = '';
+            document.getElementById('languageFilter').value = '';
+            
+            // Reset filtered sources to show all
+            filteredSources = [...allSources];
+            displaySources(filteredSources);
+        }
+
+        // Select all visible sources
+        function selectAllSources() {
+            filteredSources.forEach(source => {
+                source.selected = true;
+                // Update the original source as well
+                const originalIndex = allSources.findIndex(s => s.title === source.title && s.uri === source.uri);
+                if (originalIndex >= 0) {
+                    allSources[originalIndex].selected = true;
+                }
+            });
+            displaySources(filteredSources);
+        }
+
+        // Deselect all visible sources
+        function deselectAllSources() {
+            filteredSources.forEach(source => {
+                source.selected = false;
+                // Update the original source as well
+                const originalIndex = allSources.findIndex(s => s.title === source.title && s.uri === source.uri);
+                if (originalIndex >= 0) {
+                    allSources[originalIndex].selected = false;
+                }
+            });
+            displaySources(filteredSources);
+        }
+
+        // Fetch articles from Event Registry
+        async function fetchArticles() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const results = document.getElementById('eventRegistryResults');
+            const writeToSheetBtn = document.getElementById('writeToSheetBtn');
+            
+            // Get search terms
+            const searchMode = document.querySelector('input[name="searchMode"]:checked').value;
+            let searchTerms = [];
+            let useBooleanQuery = false;
+            let booleanQuery = '';
+            
+            if (searchMode === 'simple') {
+                const termsText = document.getElementById('searchTerms').value.trim();
+                searchTerms = termsText.split('\n').filter(term => term.trim());
+            } else {
+                // Use boolean query builder
+                const booleanTerms = getBooleanSearchTerms();
+                if (booleanTerms.length > 0) {
+                    useBooleanQuery = true;
+                    booleanQuery = buildQueryString(booleanTerms);
+                    searchTerms = [booleanQuery];
+                }
+            }
+
+            // Get selected sources
+            const selectedSources = allSources.filter(source => source.selected);
+            
+            // Get date range
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+
+            // Validate inputs
+            if (searchTerms.length === 0) {
+                results.innerHTML = '<div class="error">Please enter search terms</div>';
+                return;
+            }
+
+            if (selectedSources.length === 0) {
+                results.innerHTML = '<div class="error">Please select at least one source</div>';
+                return;
+            }
+
+            if (!startDate || !endDate) {
+                results.innerHTML = '<div class="error">Please select both start and end dates</div>';
+                return;
+            }
+
+            loadingSpinner.classList.add('show');
+            results.innerHTML = '<div class="info">Fetching articles...</div>';
+            writeToSheetBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/event-registry/fetch-articles', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        searchTerms,
+                        sources: selectedSources.map(s => s.uri),
+                        startDate,
+                        endDate,
+                        useBooleanQuery,
+                        booleanQuery,
+                        projectId: '<%= project.id %>'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    fetchedArticles = data.articles;
+                    results.innerHTML = `
+                        <div class="success">
+                            <strong>Success!</strong> Found ${data.count} articles
+                        </div>
+                        <div class="info">
+                            Articles fetched successfully. Click "Write to Sheet" to save them to your project sheet.
+                        </div>
+                    `;
+                    writeToSheetBtn.disabled = false;
+                } else {
+                    results.innerHTML = `<div class="error">Error: ${data.message}</div>`;
+                }
+            } catch (error) {
+                results.innerHTML = `<div class="error">Error fetching articles: ${error.message}</div>`;
+            } finally {
+                loadingSpinner.classList.remove('show');
+            }
+        }
+
+        // Write articles to project sheet
+        async function writeToSheet() {
+            if (fetchedArticles.length === 0) {
+                alert('No articles to write. Please fetch articles first.');
+                return;
+            }
+
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const results = document.getElementById('eventRegistryResults');
+            const writeToSheetBtn = document.getElementById('writeToSheetBtn');
+
+            loadingSpinner.classList.add('show');
+            writeToSheetBtn.disabled = true;
+            results.innerHTML = '<div class="info">Writing articles to sheet...</div>';
+
+            try {
+                const response = await fetch('/api/event-registry/write-to-sheet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        projectId: '<%= project.id %>',
+                        articles: fetchedArticles
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    results.innerHTML = `
+                        <div class="success">
+                            <strong>Success!</strong> ${data.message}
+                        </div>
+                        <div class="info">
+                            ${data.count} articles have been written to your project sheet.
+                        </div>
+                    `;
+                    // Refresh the page to show updated articles
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    results.innerHTML = `<div class="error">Error: ${data.message}</div>`;
+                    writeToSheetBtn.disabled = false;
+                }
+            } catch (error) {
+                results.innerHTML = `<div class="error">Error writing to sheet: ${error.message}</div>`;
+                writeToSheetBtn.disabled = false;
+            } finally {
+                loadingSpinner.classList.remove('show');
+            }
+        }
+
+        // Set default dates (today and 30 days ago)
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            
+            document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        });
+
         // Article selection handling
         const checkboxes = document.querySelectorAll('.article-checkbox');
         const runAnalysisBtn = document.getElementById('runAnalysis');
@@ -178,6 +1302,284 @@
                 alert('Failed to add article');
             }
         });
+
+        // Event Registry functionality
+        let eventRegistryData = {
+            sources: [],
+            fetchedArticles: [],
+            projectId: '<%= project.id %>'
+        };
+
+        // Search mode handling
+        document.getElementById('searchMode').addEventListener('change', (e) => {
+            const mode = e.target.value;
+            document.getElementById('simpleSearchGroup').style.display = mode === 'simple' ? 'block' : 'none';
+            document.getElementById('booleanSearchGroup').style.display = mode === 'boolean' ? 'block' : 'none';
+        });
+
+        // Set default date range (last 30 days)
+        const today = new Date();
+        const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+        document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+
+        // Load sources
+        document.getElementById('loadSources').addEventListener('click', async () => {
+            showMessage('Loading sources...', 'info');
+            
+            try {
+                const res = await fetch('/api/event-registry/sources');
+                const data = await res.json();
+                
+                if (res.ok) {
+                    eventRegistryData.sources = data.sources;
+                    populateSourceFilters(data.filters);
+                    populateSourcesList(data.sources);
+                    showMessage(`Loaded ${data.sources.length} sources`, 'success');
+                } else {
+                    showMessage(data.message || 'Failed to load sources', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to load sources', 'error');
+            }
+        });
+
+        // Source filtering
+        function setupSourceFilters() {
+            const regionFilter = document.getElementById('regionFilter');
+            const countryFilter = document.getElementById('countryFilter');
+            const languageFilter = document.getElementById('languageFilter');
+
+            [regionFilter, countryFilter, languageFilter].forEach(filter => {
+                filter.addEventListener('change', filterSources);
+            });
+        }
+
+        function filterSources() {
+            const regionFilter = document.getElementById('regionFilter').value;
+            const countryFilter = document.getElementById('countryFilter').value;
+            const languageFilter = document.getElementById('languageFilter').value;
+
+            const filteredSources = eventRegistryData.sources.filter(source => {
+                return (!regionFilter || source.region === regionFilter) &&
+                       (!countryFilter || source.country === countryFilter) &&
+                       (!languageFilter || source.language === languageFilter);
+            });
+
+            populateSourcesList(filteredSources);
+        }
+
+        function populateSourceFilters(filters) {
+            const regionFilter = document.getElementById('regionFilter');
+            const countryFilter = document.getElementById('countryFilter');
+            const languageFilter = document.getElementById('languageFilter');
+
+            // Clear existing options except first
+            [regionFilter, countryFilter, languageFilter].forEach(filter => {
+                while (filter.children.length > 1) {
+                    filter.removeChild(filter.lastChild);
+                }
+            });
+
+            // Add region options
+            filters.regions.forEach(region => {
+                const option = document.createElement('option');
+                option.value = region;
+                option.textContent = region;
+                regionFilter.appendChild(option);
+            });
+
+            // Add country options
+            filters.countries.forEach(country => {
+                const option = document.createElement('option');
+                option.value = country;
+                option.textContent = country;
+                countryFilter.appendChild(option);
+            });
+
+            // Add language options
+            filters.languages.forEach(language => {
+                const option = document.createElement('option');
+                option.value = language;
+                option.textContent = language;
+                languageFilter.appendChild(option);
+            });
+
+            document.getElementById('sourceFilters').style.display = 'block';
+            setupSourceFilters();
+        }
+
+        function populateSourcesList(sources) {
+            const sourcesList = document.getElementById('sourcesList');
+            sourcesList.innerHTML = '';
+
+            sources.forEach(source => {
+                const sourceItem = document.createElement('div');
+                sourceItem.className = 'source-item';
+                sourceItem.innerHTML = `
+                    <input type="checkbox" id="source-${source.uri}" value="${source.uri}">
+                    <label for="source-${source.uri}">
+                        <strong>${source.title}</strong> - ${source.region || 'Unknown'} (${source.country || 'Unknown'}) - ${source.language || 'Unknown'}
+                    </label>
+                `;
+                sourcesList.appendChild(sourceItem);
+            });
+
+            document.getElementById('sourcesContainer').style.display = 'block';
+            document.getElementById('selectAllSources').style.display = 'inline-block';
+            document.getElementById('deselectAllSources').style.display = 'inline-block';
+            document.getElementById('fetchArticles').disabled = false;
+        }
+
+        // Select/Deselect all sources
+        document.getElementById('selectAllSources').addEventListener('click', () => {
+            document.querySelectorAll('#sourcesContainer input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        });
+
+        document.getElementById('deselectAllSources').addEventListener('click', () => {
+            document.querySelectorAll('#sourcesContainer input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        });
+
+        // Fetch articles
+        document.getElementById('fetchArticles').addEventListener('click', async () => {
+            const searchMode = document.getElementById('searchMode').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            // Get selected sources
+            const selectedSources = Array.from(document.querySelectorAll('#sourcesContainer input[type="checkbox"]:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (selectedSources.length === 0) {
+                showMessage('Please select at least one source', 'error');
+                return;
+            }
+
+            let searchTerms = [];
+            let booleanQuery = '';
+            let useBooleanQuery = false;
+
+            if (searchMode === 'simple') {
+                searchTerms = document.getElementById('searchTerms').value
+                    .split('\n')
+                    .map(term => term.trim())
+                    .filter(term => term.length > 0);
+                
+                if (searchTerms.length === 0) {
+                    showMessage('Please enter at least one search term', 'error');
+                    return;
+                }
+            } else {
+                booleanQuery = document.getElementById('booleanQuery').value.trim();
+                useBooleanQuery = true;
+                
+                if (!booleanQuery) {
+                    showMessage('Please enter a boolean query', 'error');
+                    return;
+                }
+            }
+
+            if (!startDate || !endDate) {
+                showMessage('Please select start and end dates', 'error');
+                return;
+            }
+
+            showMessage('Fetching articles... This may take a while.', 'info');
+            document.getElementById('fetchArticles').disabled = true;
+
+            try {
+                const requestBody = {
+                    searchTerms,
+                    sources: selectedSources,
+                    startDate,
+                    endDate,
+                    useBooleanQuery,
+                    booleanQuery,
+                    projectId: eventRegistryData.projectId
+                };
+
+                const res = await fetch('/api/event-registry/fetch-articles', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    eventRegistryData.fetchedArticles = data.articles;
+                    showMessage(`Successfully fetched ${data.count} articles`, 'success');
+                    document.getElementById('writeToSheet').disabled = false;
+                } else {
+                    showMessage(data.message || 'Failed to fetch articles', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to fetch articles', 'error');
+            } finally {
+                document.getElementById('fetchArticles').disabled = false;
+            }
+        });
+
+        // Write to sheet
+        document.getElementById('writeToSheet').addEventListener('click', async () => {
+            if (eventRegistryData.fetchedArticles.length === 0) {
+                showMessage('No articles to write. Please fetch articles first.', 'error');
+                return;
+            }
+
+            showMessage('Writing articles to sheet...', 'info');
+            document.getElementById('writeToSheet').disabled = true;
+
+            try {
+                const res = await fetch('/api/event-registry/write-to-sheet', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        projectId: eventRegistryData.projectId,
+                        articles: eventRegistryData.fetchedArticles
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    showMessage(`Successfully wrote ${data.count} articles to your project sheet`, 'success');
+                    // Clear fetched articles
+                    eventRegistryData.fetchedArticles = [];
+                    document.getElementById('writeToSheet').disabled = true;
+                } else {
+                    showMessage(data.message || 'Failed to write articles to sheet', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to write articles to sheet', 'error');
+            } finally {
+                document.getElementById('writeToSheet').disabled = false;
+            }
+        });
+
+        // Helper function to show status messages
+        function showMessage(message, type) {
+            const statusMessages = document.getElementById('statusMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `status-message status-${type}`;
+            messageDiv.textContent = message;
+            
+            statusMessages.innerHTML = '';
+            statusMessages.appendChild(messageDiv);
+            
+            // Auto-remove success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 5000);
+            }
+        }
     </script>
 </body>
 </html>

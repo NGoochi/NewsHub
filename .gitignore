@@ -47,3 +47,6 @@ build/
 # Remove sensitive files
 mediaanalysis-*.json
 get-token-*.js
+
+# Reference folder (for development reference only)
+Reference/
