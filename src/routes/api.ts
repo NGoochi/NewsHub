@@ -1,5 +1,5 @@
 import express from 'express';
-import { listProjects, getProject, saveProject } from '../lib/db';
+import { listProjectsFromDrive, getProjectFromDrive, saveProjectToDrive } from '../lib/googleDriveStorage';
 import { makeSlug } from '../lib/slug';
 import { duplicateMasterSheet } from '../lib/googleSheets';
 import { runRunchat } from '../lib/runchat';
@@ -14,7 +14,7 @@ const router = express.Router();
 // API: List projects (converted from pages/api/projects/list.ts)
 router.get('/projects/list', async (req: express.Request, res: express.Response) => {
   try {
-    const projects = await listProjects();
+    const projects = await listProjectsFromDrive();
     res.json({ projects });
   } catch (err: any) {
     console.error('list projects error', err);
@@ -51,7 +51,7 @@ router.post('/projects/create', async (req: express.Request, res: express.Respon
       meta: {},
     };
 
-    await saveProject(project);
+    await saveProjectToDrive(project);
 
     res.status(201).json({ project });
   } catch (err: any) {
@@ -64,7 +64,7 @@ router.post('/projects/create', async (req: express.Request, res: express.Respon
 router.get('/projects/:slug', async (req: express.Request, res: express.Response) => {
   try {
     const { slug } = req.params;
-    const project = await getProject(slug);
+    const project = await getProjectFromDrive(slug);
     
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
@@ -81,7 +81,7 @@ router.get('/projects/:slug', async (req: express.Request, res: express.Response
 router.post('/projects/:slug/articles/add', async (req: express.Request, res: express.Response) => {
   try {
     const { slug } = req.params;
-    const project = await getProject(slug);
+    const project = await getProjectFromDrive(slug);
     
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
@@ -106,7 +106,7 @@ router.post('/projects/:slug/articles/add', async (req: express.Request, res: ex
 
     project.articles = project.articles ?? [];
     project.articles.push(article);
-    await saveProject(project);
+    await saveProjectToDrive(project);
 
     res.status(201).json({ article });
   } catch (err: any) {
@@ -125,7 +125,7 @@ router.post('/projects/:slug/run-analysis', async (req: express.Request, res: ex
       return res.status(400).json({ message: 'articleIds required' });
     }
 
-    const project = await getProject(slug);
+    const project = await getProjectFromDrive(slug);
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
@@ -180,7 +180,7 @@ router.post('/projects/:slug/run-analysis', async (req: express.Request, res: ex
       }
     }
 
-    await saveProject(project);
+    await saveProjectToDrive(project);
 
     // write a compact analysis table to the Google Sheet
     try {

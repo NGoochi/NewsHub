@@ -1,10 +1,8 @@
 import express from 'express';
-import { listProjects } from '../lib/db';
+import { listProjectsFromDrive, getProjectFromDrive, saveProjectToDrive, listArchivedProjects } from '../lib/googleDriveStorage';
 import { makeSlug } from '../lib/slug';
 import { duplicateMasterSheet } from '../lib/googleSheets';
-import { saveProject } from '../lib/db';
 import { Project } from '../types/project';
-import { listArchivedProjects } from '../lib/googleDriveStorage';
 import { projectCache } from '../lib/cache';
 
 const router = express.Router();
@@ -12,7 +10,7 @@ const router = express.Router();
 // Dashboard route (converted from pages/index.tsx)
 router.get('/', async (req: express.Request, res: express.Response) => {
   try {
-    const projects = await listProjects();
+    const projects = await listProjectsFromDrive();
     res.render('dashboard', { projects });
   } catch (err: any) {
     console.error('Dashboard error:', err);
@@ -25,9 +23,7 @@ router.get('/', async (req: express.Request, res: express.Response) => {
 router.get('/:slug', async (req: express.Request, res: express.Response) => {
   try {
     const { slug } = req.params;
-    const { getProject } = await import('../lib/db');
-    
-    const project = await getProject(slug);
+    const project = await getProjectFromDrive(slug);
     if (!project) {
       return res.status(404).render('error', { message: 'Project not found' });
     }
