@@ -203,6 +203,24 @@ router.post('/projects/:slug/run-analysis', async (req: express.Request, res: ex
   }
 });
 
+// API: Get sync status
+router.get('/sync-status', async (req: express.Request, res: express.Response) => {
+  try {
+    const syncStatus = projectCache.getSyncStatus();
+    res.json({
+      lastSync: syncStatus.lastSync,
+      isSyncing: syncStatus.isSyncing,
+      projectCount: syncStatus.projectCount,
+      archivedCount: syncStatus.archivedCount
+    });
+  } catch (err: any) {
+    console.error('Sync status error:', err);
+    res.status(500).json({ 
+      message: err.message || 'Failed to get sync status'
+    });
+  }
+});
+
 // API: Manual sync endpoint
 router.post('/sync', async (req: express.Request, res: express.Response) => {
   try {

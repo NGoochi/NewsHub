@@ -224,12 +224,76 @@
             font-size: 1.1rem;
             margin-top: 40px;
         }
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 16px 0;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .nav-links {
+            display: flex;
+            gap: 16px;
+        }
+        .nav-link {
+            color: #34495e;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .nav-link:hover {
+            background: #ecf0f1;
+            border-color: #bdc3c7;
+        }
+        .nav-link.active {
+            background: #34495e;
+            color: white;
+            border-color: #2c3e50;
+        }
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #27ae60;
+        }
+        .sync-indicator.syncing {
+            background: #f39c12;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>NewsHub</h1>
+        </div>
+
+        <!-- Navigation Bar -->
+        <div class="nav-bar">
+            <div class="nav-links">
+                <a href="/" class="nav-link active">Dashboard</a>
+                <a href="/archive" class="nav-link">Archive</a>
+                <a href="/settings" class="nav-link">Settings</a>
+            </div>
+            <div class="sync-status">
+                <div class="sync-indicator" id="syncIndicator"></div>
+                <span id="syncStatus">Synced</span>
+            </div>
         </div>
 
         <div class="projects-grid">
@@ -347,6 +411,34 @@
                 hideCreateForm();
             }
         });
+
+        // Update sync status
+        async function updateSyncStatus() {
+            try {
+                const response = await fetch('/api/sync-status');
+                if (response.ok) {
+                    const data = await response.json();
+                    const indicator = document.getElementById('syncIndicator');
+                    const status = document.getElementById('syncStatus');
+                    
+                    if (data.isSyncing) {
+                        indicator.classList.add('syncing');
+                        status.textContent = 'Syncing...';
+                    } else {
+                        indicator.classList.remove('syncing');
+                        status.textContent = data.lastSync ? 
+                            `Last sync: ${new Date(data.lastSync).toLocaleTimeString()}` : 
+                            'Not synced';
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to update sync status:', error);
+            }
+        }
+
+        // Update sync status on page load and every 30 seconds
+        updateSyncStatus();
+        setInterval(updateSyncStatus, 30000);
     </script>
 </body>
 </html>
