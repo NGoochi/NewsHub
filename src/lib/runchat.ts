@@ -1,42 +1,143 @@
-// lib/runchat.ts
 import fetch from 'node-fetch';
 
-type RunChatResponse = any;
-
-const BASE = 'https://runchat.app/api/v1';
-
-function getAuthHeader() {
-  const token = process.env.RUNCHAT_API_TOKEN;
-  if (!token) throw new Error('RUNCHAT_API_TOKEN not set in env');
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+interface RunChatInput {
+  sheetid: string;
+  SheetRequest: string;
 }
 
-/**
- * Run a RunChat flow.
- * - flowId: the id of the runchat flow (published id)
- * - body: arbitrary object. If your flow contains published params, send { inputs: { <paramId>: value } }
- *         otherwise flows with a webhook input accept arbitrary JSON.
- */
-export async function runRunchat(flowId: string, body: any): Promise<RunChatResponse> {
-  if (!flowId) throw new Error('flowId required');
-  const url = `${BASE}/${encodeURIComponent(flowId)}/run`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: getAuthHeader(),
-    body: JSON.stringify(body ?? {}),
-  });
-
-  const txt = await res.text();
-  let parsed;
-  try {
-    parsed = txt ? JSON.parse(txt) : null;
-  } catch (err) {
-    parsed = txt;
-  }
-
-  if (!res.ok) {
-    const message = typeof parsed === 'object' ? JSON.stringify(parsed) : String(parsed);
-    throw new Error(`RunChat run failed (${res.status}): ${message}`);
-  }
-  return parsed;
+interface RunChatResponse {
+  metadata: string;
+  runchat_instance_id: string;
+  data: Array<{
+    id: string;
+    label: string;
+    type: string;
+    description: string;
+    data: any[];
+  }>;
 }
+
+interface RunChatSchema {
+  inputs: Array<{
+    id: string;
+    label: string;
+    type: string;
+    description: string;
+    data: any;
+  }>;
+  outputs: Array<{
+    id: string;
+    label: string;
+    type: string;
+    description: string;
+    data: any;
+  }>;
+  name: string;
+}
+
+export class RunChatService {
+  private apiKey: string;
+  private runchatId: string;
+  private baseUrl: string = 'https://runchat.app/api/v1';
+
+  constructor() {
+    this.apiKey = process.env.RUNCHAT_API_KEY || '';
+    this.runchatId = process.env.RUNCHAT_ID || '';
+    
+    if (!this.apiKey || !this.runchatId) {
+      throw new Error('Missing RunChat API credentials. Please check your .env file.');
+    }
+  }
+
+  /**
+   * Get the schema for the RunChat flow
+   */
+  async getSchema(): Promise<RunChatSchema> {
+    try {
+      const response = await fetch(`${this.baseUrl}/${this.runchatId}/schema`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`RunChat schema request failed: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json() as RunChatSchema;
+    } catch (error) {
+      console.error('Error fetching RunChat schema:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute the RunChat flow with article analysis
+   */
+  async analyzeArticles(sheetId: string, sheetRequest: string): Promise<RunChatResponse> {
+    try {
+      const inputs: RunChatInput = {
+        sheetid: sheetId,
+        SheetRequest: sheetRequest
+      };
+
+      const response = await fetch(`${this.baseUrl}/${this.runchatId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          inputs: inputs
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`RunChat analysis request failed: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json() as RunChatResponse;
+    } catch (error) {
+      console.error('Error running RunChat analysis:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Continue an existing RunChat instance
+   */
+  async continueAnalysis(instanceId: string, sheetId: string, sheetRequest: string): Promise<RunChatResponse> {
+    try {
+      const inputs: RunChatInput = {
+        sheetid: sheetId,
+        SheetRequest: sheetRequest
+      };
+
+      const response = await fetch(`${this.baseUrl}/${this.runchatId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          runchat_instance_id: instanceId,
+          inputs: inputs
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`RunChat continue request failed: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json() as RunChatResponse;
+    } catch (error) {
+      console.error('Error continuing RunChat analysis:', error);
+      throw error;
+    }
+  }
+}
+
+// Export a singleton instance
+export const runchatService = new RunChatService();

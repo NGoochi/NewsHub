@@ -118,6 +118,12 @@ This project uses:
 - **RunChat** for AI analysis
 - **File-based storage** (easily swappable for database)
 
+## Documentation
+
+- **DEFINITIONS.md** - Application-specific definitions, data structures, and development notes
+- **README-oauth-setup.md** - Google OAuth2 setup guide
+- **README-EXPRESS-CONVERSION.md** - Express.js conversion notes
+
 ## License
 
 Private project - All rights reserved

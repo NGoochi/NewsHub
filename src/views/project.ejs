@@ -15,6 +15,7 @@
         .btn { padding: 8px 16px; text-decoration: none; border-radius: 4px; display: inline-block; }
         .btn-secondary { background: #f5f5f5; color: #333; }
         .btn-primary { background: #0070f3; color: white; }
+        .btn-info { background: #17a2b8; color: white; border: none; cursor: pointer; }
         .btn-success { background: #28a745; color: white; border: none; cursor: pointer; }
         .btn-success:disabled { background: #ccc; cursor: not-allowed; opacity: 0.5; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
@@ -23,6 +24,14 @@
         .status-badge { padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
         .status-complete { background-color: #d4edda; color: #155724; }
         .status-pending { background-color: #f8d7da; color: #721c24; }
+        pre { 
+            background: #f8f9fa; 
+            padding: 8px; 
+            border-radius: 4px; 
+            overflow-x: auto; 
+            white-space: pre-wrap; 
+            word-break: break-all;
+        }
         .form-section { padding: 16px; border: 1px solid #ddd; border-radius: 8px; margin-top: 24px; }
         .form-group { margin-bottom: 12px; }
         input, textarea, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
@@ -409,6 +418,119 @@
         .query-item .group-controls button:hover {
             background-color: #e9ecef;
         }
+        
+        /* Article Cards */
+        .articles-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .article-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 16px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .article-id {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            font-size: 10px;
+            color: #999;
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        
+        .article-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-top: 20px; /* Make room for the ID */
+        }
+        
+        .article-checkbox-container {
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+        
+        .article-main {
+            flex: 1;
+        }
+        
+        .article-title {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.4;
+        }
+        
+        .article-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .article-source {
+            font-weight: 500;
+            color: #0070f3;
+        }
+        
+        .article-author {
+            color: #666;
+        }
+        
+        .article-date {
+            color: #888;
+        }
+        
+        .article-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .btn-view-article {
+            color: #0070f3 !important;
+            text-decoration: none;
+            border: 1px solid #0070f3;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .btn-view-article:hover {
+            background-color: #0070f3;
+            color: white !important;
+        }
+        
+        .article-preview {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+        }
+        
+        .article-preview p {
+            margin: 0;
+            color: #555;
+            line-height: 1.5;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -522,10 +644,18 @@
                     </div>
                 </div>
 
+                <!-- Auto Write Setting -->
+                <div class="form-group">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="autoWriteToSheet" checked onchange="toggleAutoWrite()">
+                        <span>Auto write to sheet</span>
+                    </label>
+                </div>
+
                 <!-- Action Buttons -->
                 <div class="action-buttons">
                     <button type="button" onclick="fetchArticles()" class="btn btn-primary">Fetch Articles</button>
-                    <button type="button" onclick="writeToSheet()" class="btn btn-success" id="writeToSheetBtn" disabled>Write to Sheet</button>
+                    <button type="button" onclick="writeToSheet()" class="btn btn-success" id="writeToSheetBtn" style="display: none;">Write to Sheet</button>
                 </div>
 
                 <!-- Loading Spinner -->
@@ -547,6 +677,9 @@
             </div>
             <div style="display: flex; gap: 12px;">
                 <a href="/" class="btn btn-secondary">← Back to Dashboard</a>
+                <button class="btn btn-info" onclick="viewProjectInfo('<%= project.id %>')">
+                    📋 Project Info
+                </button>
                 <% if (project.sheetUrl) { %>
                     <a href="<%= project.sheetUrl %>" target="_blank" rel="noreferrer" class="btn btn-primary">
                         📊 View Database
@@ -556,62 +689,13 @@
         </div>
 
         <section style="margin-bottom: 24px;">
-            <h2>Articles (<%= project.articles ? project.articles.length : 0 %>)</h2>
-            <% if (project.articles && project.articles.length > 0) { %>
-                <table>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Title</th>
-                            <th>Source</th>
-                            <th>Retrieved</th>
-                            <th>Analysis</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% project.articles.forEach(article => { %>
-                            <tr>
-                                <td>
-                                    <input type="checkbox" class="article-checkbox" data-id="<%= article.id %>">
-                                </td>
-                                <td><%= article.title %></td>
-                                <td><%= article.source || 'Manual' %></td>
-                                <td><%= article.retrievedAt ? new Date(article.retrievedAt).toLocaleString() : '' %></td>
-                                <td>
-                                    <span class="status-badge <%= article.analysisStatus === 'complete' ? 'status-complete' : 'status-pending' %>">
-                                        <%= article.analysisStatus || 'pending' %>
-                                    </span>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-
-                <div style="margin-bottom: 16px;">
-                    <button id="runAnalysis" class="btn btn-success" disabled>
-                        Run Analysis on Selected (<span id="selectedCount">0</span>)
-                    </button>
-                </div>
-            <% } else { %>
-                <p>No articles yet. Add some articles below to get started!</p>
-            <% } %>
+            <h2>Articles</h2>
+            <div id="articlesContainer">
+                <div class="info">Loading articles from sheet...</div>
+            </div>
         </section>
 
-            <div class="form-section">
-                <h3>Add Article (Manual)</h3>
-                <form id="addArticleForm">
-                    <div class="form-group">
-                        <input type="text" id="articleTitle" placeholder="Article Title *" required>
-                    </div>
-                    <div class="form-group">
-                        <input type="url" id="articleUrl" placeholder="URL (optional)">
-                    </div>
-                    <div class="form-group">
-                        <textarea id="articleContent" placeholder="Content (optional)"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add Article</button>
-                </form>
-            </div>
+
         </div>
     </div>
 
@@ -619,6 +703,25 @@
         // Event Registry functionality
         let eventRegistrySources = [];
         let fetchedArticles = [];
+        let autoWriteEnabled = true; // Default to true
+
+        // Toggle auto-write functionality
+        function toggleAutoWrite() {
+            const checkbox = document.getElementById('autoWriteToSheet');
+            const writeBtn = document.getElementById('writeToSheetBtn');
+            autoWriteEnabled = checkbox.checked;
+            
+            if (autoWriteEnabled) {
+                writeBtn.style.display = 'none';
+            } else {
+                writeBtn.style.display = 'inline-block';
+            }
+        }
+
+        // View project info (JSON file)
+        function viewProjectInfo(projectId) {
+            window.open(`/api/projects/${projectId}/info`, '_blank');
+        }
 
         // Search mode toggle
         document.querySelectorAll('input[name="searchMode"]').forEach(radio => {
@@ -1146,15 +1249,31 @@
 
                 if (response.ok) {
                     fetchedArticles = data.articles;
-                    results.innerHTML = `
-                        <div class="success">
-                            <strong>Success!</strong> Found ${data.count} articles
-                        </div>
-                        <div class="info">
-                            Articles fetched successfully. Click "Write to Sheet" to save them to your project sheet.
-                        </div>
-                    `;
-                    writeToSheetBtn.disabled = false;
+                    
+                    if (autoWriteEnabled) {
+                        // Auto-write to sheet
+                        results.innerHTML = `
+                            <div class="success">
+                                <strong>Success!</strong> Found ${data.count} articles
+                            </div>
+                            <div class="info">
+                                Auto-writing articles to sheet...
+                            </div>
+                        `;
+                        
+                        // Automatically write to sheet
+                        await writeToSheet();
+                    } else {
+                        results.innerHTML = `
+                            <div class="success">
+                                <strong>Success!</strong> Found ${data.count} articles
+                            </div>
+                            <div class="info">
+                                Articles fetched successfully. Click "Write to Sheet" to save them to your project sheet.
+                            </div>
+                        `;
+                        writeToSheetBtn.disabled = false;
+                    }
                 } else {
                     results.innerHTML = `<div class="error">Error: ${data.message}</div>`;
                 }
@@ -1203,10 +1322,24 @@
                             ${data.count} articles have been written to your project sheet.
                         </div>
                     `;
-                    // Refresh the page to show updated articles
-                    setTimeout(() => {
-                        location.reload();
-                    }, 2000);
+                    // Don't reload the page - preserve search inputs
+                    // Just refresh the articles section and sheet data
+                    setTimeout(async () => {
+                        // Sync articles from sheet first
+                        try {
+                            await fetch(`/api/projects/<%= project.id %>/sync-articles`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                        } catch (error) {
+                            console.warn('Failed to sync articles:', error);
+                        }
+                        
+                        // Update the articles count in the main content
+                        updateArticlesDisplay();
+                        // Reload sheet data to show the newly written articles
+                        loadSheetData();
+                    }, 1000);
                 } else {
                     results.innerHTML = `<div class="error">Error: ${data.message}</div>`;
                     writeToSheetBtn.disabled = false;
@@ -1219,6 +1352,116 @@
             }
         }
 
+        // Update articles display without reloading page
+        async function updateArticlesDisplay() {
+            try {
+                const response = await fetch(`/api/projects/<%= project.id %>`);
+                const data = await response.json();
+                if (data.success && data.project) {
+                    // Update the articles count in the header
+                    const articlesHeader = document.querySelector('h2');
+                    if (articlesHeader) {
+                        articlesHeader.textContent = `Articles (${data.project.articles ? data.project.articles.length : 0})`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating articles display:', error);
+            }
+        }
+
+        // Load sheet data automatically
+        async function loadSheetData() {
+            const articlesContainer = document.getElementById('articlesContainer');
+            
+            try {
+                // Fetch both sheet data and project data
+                const [sheetResponse, projectResponse] = await Promise.all([
+                    fetch(`/api/projects/<%= project.id %>/sheet-data`),
+                    fetch(`/api/projects/<%= project.id %>/info`)
+                ]);
+                
+                const sheetData = await sheetResponse.json();
+                const projectData = await projectResponse.json();
+                
+                if (sheetResponse.ok && sheetData.success) {
+                    if (sheetData.rows && sheetData.rows.length > 1) { // More than just header
+                        // Update Articles section (card layout)
+                        let articlesHtml = `<div class="articles-list">`;
+                        
+                        sheetData.rows.forEach((row, index) => {
+                            if (index === 0) return; // Skip header row
+                            if (row.length > 0 && row[0]) { // Check if row has content
+                                // Get first 50 words from full body text (Column F = row[5])
+                                let contentPreview = '';
+                                if (row[5]) {
+                                    const words = row[5].split(' ');
+                                    contentPreview = words.slice(0, 50).join(' ');
+                                    if (words.length > 50) contentPreview += '...';
+                                }
+                                
+                                // Find the article status from project data
+                                const articleId = index; // Row number
+                                const sheetArticle = projectData.sheetArticles?.find(sa => sa.id === articleId);
+                                const status = sheetArticle?.status || 'Retrieved';
+                                const statusClass = status === 'Analysed' ? 'status-complete' : 'status-pending';
+                                
+                                // Articles section (card layout)
+                                articlesHtml += `
+                                    <div class="article-card">
+                                        <div class="article-id">#${row[0] || index}</div>
+                                        <div class="article-header">
+                                            <div class="article-checkbox-container">
+                                                <input type="checkbox" class="article-checkbox" data-id="article-${index}">
+                                            </div>
+                                            <div class="article-main">
+                                                <h3 class="article-title">${row[2] || 'Untitled'}</h3>
+                                                <div class="article-meta">
+                                                    <span class="article-source">${row[1] || 'Unknown Source'}</span>
+                                                    ${row[3] ? `<span class="article-author">by ${row[3]}</span>` : ''}
+                                                    <span class="article-date">${row[6] || ''}</span>
+                                                </div>
+                                            </div>
+                                            <div class="article-actions">
+                                                ${row[4] ? `<a href="${row[4]}" target="_blank" rel="noopener noreferrer" class="btn-view-article">View Original Article</a>` : ''}
+                                                <span class="status-badge ${statusClass}">${status.toLowerCase()}</span>
+                                            </div>
+                                        </div>
+                                        ${contentPreview ? `
+                                            <div class="article-preview">
+                                                <p><strong>Article Preview:</strong> ${contentPreview}</p>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            }
+                        });
+                        
+                        articlesHtml += '</div>';
+                        
+                        // Add analysis button
+                        articlesHtml += `
+                            <div style="margin-top: 16px;">
+                                <button id="runAnalysis" class="btn btn-success" disabled>
+                                    Run Analysis on Selected (<span id="selectedCount">0</span>)
+                                </button>
+                            </div>
+                        `;
+                        
+                        articlesContainer.innerHTML = articlesHtml;
+                        
+                        // Re-initialize article selection handling
+                        initializeArticleSelection();
+                    } else {
+                        articlesContainer.innerHTML = '<p>No articles found in the sheet yet.</p>';
+                    }
+                } else {
+                    articlesContainer.innerHTML = `<div class="error">Error: ${data.message || 'Failed to load sheet data'}</div>`;
+                }
+            } catch (error) {
+                articlesContainer.innerHTML = `<div class="error">Error loading sheet data: ${error.message}</div>`;
+            }
+        }
+
         // Set default dates (today and 30 days ago)
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date();
@@ -1227,81 +1470,312 @@
             
             document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
             document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            
+            // Initialize auto-write checkbox state
+            toggleAutoWrite();
+            
+            // Load sheet data automatically on page load
+            loadSheetData();
         });
 
         // Article selection handling
-        const checkboxes = document.querySelectorAll('.article-checkbox');
-        const runAnalysisBtn = document.getElementById('runAnalysis');
-        const selectedCount = document.getElementById('selectedCount');
         let selectedArticles = {};
 
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', (e) => {
-                const articleId = e.target.dataset.id;
-                selectedArticles[articleId] = e.target.checked;
-                
-                const count = Object.values(selectedArticles).filter(Boolean).length;
-                selectedCount.textContent = count;
-                runAnalysisBtn.disabled = count === 0;
+        function initializeArticleSelection() {
+            const checkboxes = document.querySelectorAll('.article-checkbox');
+            const runAnalysisBtn = document.getElementById('runAnalysis');
+            const selectedCount = document.getElementById('selectedCount');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const articleId = e.target.dataset.id;
+                    selectedArticles[articleId] = e.target.checked;
+                    
+                    const count = Object.values(selectedArticles).filter(Boolean).length;
+                    if (selectedCount) selectedCount.textContent = count;
+                    if (runAnalysisBtn) runAnalysisBtn.disabled = count === 0;
+                });
             });
+        }
+
+        // Run analysis (event delegation for dynamically created buttons)
+        document.addEventListener('click', async (e) => {
+            if (e.target && e.target.id === 'runAnalysis') {
+                const articleIds = Object.keys(selectedArticles).filter(id => selectedArticles[id]);
+                if (articleIds.length === 0) return;
+
+                // Show confirmation popup with article IDs
+                // The actual sheet formatting will be done on the backend
+                showRunChatRequestConfirmation(articleIds);
+            }
         });
 
-        // Run analysis
-        runAnalysisBtn.addEventListener('click', async () => {
-            const articleIds = Object.keys(selectedArticles).filter(id => selectedArticles[id]);
-            if (articleIds.length === 0) return;
 
-            runAnalysisBtn.textContent = 'Running Analysis...';
-            runAnalysisBtn.disabled = true;
-
+        // Function to show RunChat request confirmation
+        async function showRunChatRequestConfirmation(articleIds) {
+            // Create confirmation modal
+            let confirmModal = document.getElementById('runchatConfirmModal');
+            if (!confirmModal) {
+                confirmModal = document.createElement('div');
+                confirmModal.id = 'runchatConfirmModal';
+                confirmModal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.5);
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = `
+                    background: white;
+                    border-radius: 8px;
+                    padding: 20px;
+                    max-width: 90%;
+                    max-height: 90%;
+                    overflow: auto;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                `;
+                
+                const title = document.createElement('h3');
+                title.textContent = 'RunChat API Request';
+                title.style.marginTop = '0';
+                
+                const requestInfo = document.createElement('div');
+                requestInfo.style.cssText = `
+                    margin: 16px 0;
+                    padding: 12px;
+                    background: #f8f9fa;
+                    border-radius: 4px;
+                    font-family: monospace;
+                    font-size: 12px;
+                `;
+                
+                const buttons = document.createElement('div');
+                buttons.style.cssText = `
+                    display: flex;
+                    gap: 12px;
+                    justify-content: flex-end;
+                    margin-top: 16px;
+                `;
+                
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.style.cssText = `
+                    padding: 8px 16px;
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                `;
+                cancelBtn.onclick = () => confirmModal.remove();
+                
+                const confirmBtn = document.createElement('button');
+                confirmBtn.textContent = 'Send Request';
+                confirmBtn.style.cssText = `
+                    padding: 8px 16px;
+                    background: #007bff;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                `;
+                
+                modalContent.appendChild(title);
+                modalContent.appendChild(requestInfo);
+                modalContent.appendChild(buttons);
+                buttons.appendChild(cancelBtn);
+                buttons.appendChild(confirmBtn);
+                confirmModal.appendChild(modalContent);
+                document.body.appendChild(confirmModal);
+                
+                // Store elements for later use
+                confirmModal._requestInfo = requestInfo;
+                confirmModal._confirmBtn = confirmBtn;
+            }
+            
+            // Show loading state
+            confirmModal._requestInfo.innerHTML = `
+                <strong>Loading request details...</strong>
+            `;
+            
+            // Fetch project data to show full request body
             try {
-                const res = await fetch(`/api/projects/<%= project.id %>/run-analysis`, {
+                const projectResponse = await fetch(`/api/projects/<%= project.id %>/info`);
+                const projectData = await projectResponse.json();
+                
+                if (projectData.sheetId) {
+                    // Create the sheet request data (same logic as backend)
+                    const selectedRowNumbers = articleIds.map(id => parseInt(id.replace('article-', '')) + 1).sort((a, b) => a - b);
+                    
+                    // Group consecutive row numbers together for efficient ranges
+                    const ranges = [];
+                    let start = selectedRowNumbers[0];
+                    let end = selectedRowNumbers[0];
+                    
+                    for (let i = 1; i < selectedRowNumbers.length; i++) {
+                        if (selectedRowNumbers[i] === end + 1) {
+                            end = selectedRowNumbers[i];
+                        } else {
+                            if (start === end) {
+                                ranges.push(`Articles!A${start}:H${start}`);
+                            } else {
+                                ranges.push(`Articles!A${start}:H${end}`);
+                            }
+                            start = selectedRowNumbers[i];
+                            end = selectedRowNumbers[i];
+                        }
+                    }
+                    
+                    if (start === end) {
+                        ranges.push(`Articles!A${start}:H${start}`);
+                    } else {
+                        ranges.push(`Articles!A${start}:H${end}`);
+                    }
+                    
+                    // Format as Google Sheets API URL
+                    const rangesParam = ranges.map(range => `ranges=${encodeURIComponent(range)}`).join('&');
+                    const sheetRequest = `https://sheets.googleapis.com/v4/spreadsheets/${projectData.sheetId}/values:batchGet?${rangesParam}&valueRenderOption=UNFORMATTED_VALUE&majorDimension=ROWS`;
+                    
+                    // Format the full request body
+                    const fullRequestBody = {
+                        inputs: {
+                            sheetid: projectData.sheetId,
+                            SheetRequest: sheetRequest
+                        }
+                    };
+                    
+                    // Display the full request body
+                    confirmModal._requestInfo.innerHTML = `
+                        <strong>Selected Articles:</strong> ${articleIds.join(', ')}<br><br>
+                        <strong>Sheet Rows:</strong> ${selectedRowNumbers.join(', ')}<br><br>
+                        <strong>Ranges:</strong> ${ranges.join(', ')}<br><br>
+                        <strong>API Endpoint:</strong> https://runchat.app/api/v1/[RUNCHAT_ID]<br><br>
+                        <strong>Full Request Body:</strong><br>
+                        <pre>${JSON.stringify(fullRequestBody, null, 2)}</pre>
+                    `;
+                } else {
+                    confirmModal._requestInfo.innerHTML = `
+                        <strong>Error:</strong> Project has no associated sheet
+                    `;
+                }
+            } catch (error) {
+                confirmModal._requestInfo.innerHTML = `
+                    <strong>Error:</strong> Failed to get project data: ${error.message}
+                `;
+            }
+            
+            // Set up confirm button
+            confirmModal._confirmBtn.onclick = async () => {
+                confirmModal.remove();
+                await sendRunChatRequest(articleIds);
+            };
+        }
+
+        // Function to send the actual RunChat request
+        async function sendRunChatRequest(articleIds) {
+            try {
+                const response = await fetch(`/api/projects/<%= project.id %>/run-analysis`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ articleIds })
                 });
 
-                if (res.ok) {
-                    alert('Analysis completed (saved to project).');
-                    location.reload(); // Refresh to show updated data
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Display RunChat response in a text box on the page
+                    displayRunChatResponse(data);
+                    
+                    // Reload sheet data to show updated analysis
+                    loadSheetData();
                 } else {
-                    const err = await res.json();
+                    const err = await response.json();
                     alert(err.message || 'Analysis error');
                 }
             } catch (error) {
-                alert('Analysis failed');
-            } finally {
-                runAnalysisBtn.textContent = 'Run Analysis on Selected (' + articleIds.length + ')';
-                runAnalysisBtn.disabled = false;
+                alert('Analysis failed: ' + error.message);
             }
-        });
+        }
 
-        // Add article form
-        document.getElementById('addArticleForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Function to display RunChat response
+        function displayRunChatResponse(data) {
+            // Create or update the response display area
+            let responseBox = document.getElementById('runchatResponseBox');
+            if (!responseBox) {
+                responseBox = document.createElement('div');
+                responseBox.id = 'runchatResponseBox';
+                responseBox.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    width: 80%;
+                    max-width: 800px;
+                    height: 60%;
+                    background: white;
+                    border: 2px solid #007bff;
+                    border-radius: 8px;
+                    padding: 20px;
+                    z-index: 1000;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+                    overflow: hidden;
+                `;
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = 'Close';
+                closeBtn.style.cssText = `
+                    position: absolute;
+                    top: 10px;
+                    right: 10px;
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                `;
+                closeBtn.onclick = () => responseBox.remove();
+                
+                const title = document.createElement('h3');
+                title.textContent = 'RunChat Analysis Response';
+                title.style.marginTop = '0';
+                
+                const textarea = document.createElement('textarea');
+                textarea.id = 'runchatResponseText';
+                textarea.style.cssText = `
+                    width: 100%;
+                    height: calc(100% - 80px);
+                    font-family: monospace;
+                    font-size: 12px;
+                    border: 1px solid #ccc;
+                    padding: 10px;
+                    resize: none;
+                `;
+                
+                responseBox.appendChild(closeBtn);
+                responseBox.appendChild(title);
+                responseBox.appendChild(textarea);
+                document.body.appendChild(responseBox);
+            }
             
-            const title = document.getElementById('articleTitle').value;
-            const url = document.getElementById('articleUrl').value;
-            const content = document.getElementById('articleContent').value;
-
-            if (!title) return;
-
-            try {
-                const res = await fetch(`/api/projects/<%= project.id %>/articles/add`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, url, content })
-                });
-
-                if (res.ok) {
-                    location.reload(); // Refresh to show new article
-                } else {
-                    alert('Failed to add article');
-                }
-            } catch (error) {
-                alert('Failed to add article');
-            }
-        });
+            const textarea = document.getElementById('runchatResponseText');
+            const responseData = {
+                selectedArticles: data.debug.selectedArticleIds,
+                sheetRows: data.debug.selectedRowNumbers,
+                ranges: data.debug.ranges,
+                sheetRequest: JSON.parse(data.debug.sheetRequest),
+                runchatResponse: data.debug.runchatResponse
+            };
+            
+            textarea.value = JSON.stringify(responseData, null, 2);
+        }
 
         // Event Registry functionality
         let eventRegistryData = {

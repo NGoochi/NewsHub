@@ -16,7 +16,7 @@ type DriveFolder = {
   webViewLink: string;
 };
 
-async function getAuthClient() {
+export async function getAuthClient() {
   const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN } = process.env;
   
   if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REFRESH_TOKEN) {

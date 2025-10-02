@@ -9,6 +9,12 @@ export type Article = {
   analysisResult?: any | null;
 };
 
+export type SheetArticle = {
+  id: number;           // Numerical ID from sheet (row - 1)
+  title: string;        // Article title
+  status: 'Retrieved' | 'Analysed';
+};
+
 export type AnalysisRun = {
   id: string;
   timestamp: string;
@@ -26,6 +32,7 @@ export type Project = {
   queries: string[];
   owner?: string | null;  // placeholder
   articles: Article[];
+  sheetArticles: SheetArticle[];  // New: tracks articles from sheet
   analysisRuns: AnalysisRun[];
   meta?: any;
   archivedAt?: string;   // timestamp when project was archived

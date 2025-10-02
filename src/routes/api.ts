@@ -2,7 +2,7 @@ import express from 'express';
 import { listProjects, getProject, saveProject, initializeProjects, archiveProject } from '../lib/db';
 import { makeSlug } from '../lib/slug';
 import { duplicateMasterSheet } from '../lib/googleSheets';
-import { runRunchat } from '../lib/runchat';
+import { runchatService } from '../lib/runchat';
 import { writeAnalysisToSheet } from '../lib/googleSheets';
 import { nanoid } from 'nanoid';
 import { Project } from '../types/project';
@@ -132,73 +132,117 @@ router.post('/projects/:slug/run-analysis', async (req: express.Request, res: ex
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    // gather articles
-    const selected = project.articles.filter(a => articleIds.includes(a.id));
+    // Use sheet-based articles instead of project.articles
+    const selected = project.sheetArticles?.filter(a => articleIds.includes(`article-${a.id}`)) || [];
     if (selected.length === 0) {
-      return res.status(400).json({ message: 'No matching articles found' });
+      return res.status(400).json({ message: 'No matching articles found in sheet data' });
     }
 
-    // Prepare payload for RunChat
-    const flowId = process.env.RUNCHAT_FLOW_ID;
-    if (!flowId) {
-      return res.status(500).json({ message: 'RUNCHAT_FLOW_ID not set in env' });
+    if (!project.sheetId) {
+      return res.status(400).json({ message: 'Project has no associated sheet' });
     }
 
-    const payload: any = {
-      inputs: {
-        articles: selected.map(a => ({
-          id: a.id,
-          title: a.title,
-          url: a.url,
-          source: a.source,
-          content: a.content,
-        })),
-      },
-    };
-    if (runchatInstanceId) payload.runchat_instance_id = runchatInstanceId;
+    // Prepare sheet request data for RunChat
+    // The RunChat flow expects sheetid and SheetRequest parameters
+    // SheetRequest should be a formatted Google Sheets API request to read selected articles
+    
+    // Convert article IDs to sheet row numbers (article ID + 1 due to header row)
+    const selectedRowNumbers = articleIds.map(id => parseInt(id.replace('article-', '')) + 1).sort((a, b) => a - b);
+    
+    // Group consecutive row numbers together for efficient ranges
+    const ranges: string[] = [];
+    let start = selectedRowNumbers[0];
+    let end = selectedRowNumbers[0];
+    
+    for (let i = 1; i < selectedRowNumbers.length; i++) {
+      if (selectedRowNumbers[i] === end + 1) {
+        // Consecutive, extend the range
+        end = selectedRowNumbers[i];
+      } else {
+        // Not consecutive, finalize current range and start new one
+        if (start === end) {
+          ranges.push(`Articles!A${start}:H${start}`);
+        } else {
+          ranges.push(`Articles!A${start}:H${end}`);
+        }
+        start = selectedRowNumbers[i];
+        end = selectedRowNumbers[i];
+      }
+    }
+    
+    // Add the final range
+    if (start === end) {
+      ranges.push(`Articles!A${start}:H${start}`);
+    } else {
+      ranges.push(`Articles!A${start}:H${end}`);
+    }
+    
+    // Format as Google Sheets API URL
+    const rangesParam = ranges.map(range => `ranges=${encodeURIComponent(range)}`).join('&');
+    const sheetRequest = `https://sheets.googleapis.com/v4/spreadsheets/${project.sheetId}/values:batchGet?${rangesParam}&valueRenderOption=UNFORMATTED_VALUE&majorDimension=ROWS`;
 
-    // call runchat
-    const runResp = await runRunchat(flowId, payload);
+    let runResp;
+    if (runchatInstanceId) {
+      // Continue existing analysis
+      runResp = await runchatService.continueAnalysis(runchatInstanceId, project.sheetId, sheetRequest);
+    } else {
+      // Start new analysis
+      runResp = await runchatService.analyzeArticles(project.sheetId, sheetRequest);
+    }
 
     // record analysis run
     const runId = `run-${nanoid(8)}`;
     const runEntry = {
       id: runId,
       timestamp: new Date().toISOString(),
-      articleIds: selected.map(a => a.id),
+      articleIds: selected.map(a => `article-${a.id}`),
       status: 'complete' as const,
-      result: runResp,
+      runchatInstanceId: runResp.runchat_instance_id,
+      results: runResp.data,
     };
     project.analysisRuns = project.analysisRuns ?? [];
     project.analysisRuns.push(runEntry);
 
-    // write results into project
-    const analysisText = typeof runResp === 'object' ? JSON.stringify(runResp) : String(runResp);
-
-    for (const art of project.articles) {
-      if (articleIds.includes(art.id)) {
-        art.analysisStatus = 'complete';
-        art.analysisResult = runResp;
+    // Update sheet articles status
+    if (project.sheetArticles) {
+      for (const art of project.sheetArticles) {
+        if (articleIds.includes(`article-${art.id}`)) {
+          art.status = 'Analysed';
+        }
       }
     }
 
     await saveProject(project);
 
-    // write a compact analysis table to the Google Sheet
+    // write results to sheet using the new RunChat response format
     try {
-      const rows = selected.map(a => [
-        a.id,
-        a.title ?? '',
-        a.url ?? '',
-        (typeof runResp === 'string') ? runResp.slice(0, 300) : JSON.stringify(runResp).slice(0, 300),
+      // Convert RunChat response to simple array format for Google Sheets
+      const analysisRows = runResp.data.map((item: any) => [
+        item.id || '',
+        item.label || '',
+        item.data ? JSON.stringify(item.data) : ''
       ]);
-      const header = [['articleId', 'title', 'url', 'analysis_preview']];
-      await writeAnalysisToSheet(project.sheetId, [...header, ...rows], 'Analysis');
+      
+      await writeAnalysisToSheet(project.sheetId, analysisRows);
     } catch (err) {
       console.warn('Failed to write analysis to sheet', err);
     }
 
-    res.json({ run: runEntry });
+    res.json({ 
+      success: true,
+      runId,
+      runchatInstanceId: runResp.runchat_instance_id,
+      results: runResp.data,
+      run: runEntry,
+      // Debug information for testing
+      debug: {
+        selectedArticleIds: articleIds,
+        selectedRowNumbers: selectedRowNumbers,
+        ranges: ranges,
+        sheetRequest: sheetRequest,
+        runchatResponse: runResp
+      }
+    });
   } catch (err: any) {
     console.error('run analysis error', err);
     res.status(500).json({ message: err.message || 'Internal server error' });
@@ -238,6 +282,101 @@ router.post('/archive/:projectId/restore', async (req: express.Request, res: exp
     res.json({ message: 'Project restored successfully' });
   } catch (err: any) {
     console.error('restore project error', err);
+    res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+});
+
+// API: Sync project articles from sheet
+router.post('/projects/:slug/sync-articles', async (req: express.Request, res: express.Response) => {
+  try {
+    const { slug } = req.params;
+    const project = await getProject(slug);
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // Import and use the sync function
+    const { updateProjectWithSheetArticles } = await import('../lib/sheetSync');
+    const updatedProject = await updateProjectWithSheetArticles(project);
+    
+    // Save the updated project locally and to Google Drive
+    await saveProject(updatedProject);
+    
+    // Also save to Google Drive
+    const { saveProjectToDrive } = await import('../lib/googleDriveStorage');
+    await saveProjectToDrive(updatedProject);
+
+    res.json({
+      success: true,
+      message: 'Articles synced successfully',
+      articleCount: updatedProject.sheetArticles?.length || 0
+    });
+  } catch (err: any) {
+    console.error('sync articles error', err);
+    res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+});
+
+// API: Get project info (JSON file)
+router.get('/projects/:slug/info', async (req: express.Request, res: express.Response) => {
+  try {
+    const { slug } = req.params;
+    const project = await getProject(slug);
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    // Set headers for JSON download
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${project.name}-project-info.json"`);
+    
+    // Send the project data as formatted JSON
+    res.json(project);
+  } catch (err: any) {
+    console.error('get project info error', err);
+    res.status(500).json({ message: err.message || 'Internal server error' });
+  }
+});
+
+// API: Get sheet data
+router.get('/projects/:slug/sheet-data', async (req: express.Request, res: express.Response) => {
+  try {
+    const { slug } = req.params;
+    const project = await getProject(slug);
+    
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    if (!project.sheetId) {
+      return res.status(400).json({ message: 'Project has no associated sheet' });
+    }
+
+    // Import Google Sheets functionality
+    const { google } = await import('googleapis');
+    const { getAuthClient } = await import('../lib/googleDriveStorage');
+    
+    const authClient = await getAuthClient();
+    const sheets = google.sheets({ version: 'v4', auth: authClient });
+
+    // Read data from the Articles tab
+    const range = 'Articles!A:Z'; // Read all columns from Articles tab
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: project.sheetId,
+      range,
+    });
+
+    const rows = response.data.values || [];
+    
+    res.json({
+      success: true,
+      rows,
+      count: rows.length - 1 // Subtract header row
+    });
+  } catch (err: any) {
+    console.error('get sheet data error', err);
     res.status(500).json({ message: err.message || 'Internal server error' });
   }
 });

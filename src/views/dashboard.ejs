@@ -316,6 +316,17 @@
             border-top: 1px solid #ecf0f1;
             align-items: center;
         }
+        .btn-info {
+            font-size: 0.9rem;
+            padding: 6px 12px;
+            background: #3498db;
+            border: 1px solid #2980b9;
+            color: white;
+            margin-right: 8px;
+        }
+        .btn-info:hover {
+            background: #2980b9;
+        }
         .btn-archive {
             font-size: 0.9rem;
             padding: 6px 12px;
@@ -372,6 +383,9 @@
                                     View Database
                                 </a>
                             <% } %>
+                            <button class="btn btn-info" onclick="viewProjectInfo('<%= project.id %>')">
+                                Project Info
+                            </button>
                             <button class="btn btn-archive" onclick="archiveProject('<%= project.id %>', '<%= project.name %>')">
                                 Archive
                             </button>
@@ -478,6 +492,11 @@
             }
         });
 
+
+        // View project info (JSON file)
+        function viewProjectInfo(projectId) {
+            window.open(`/api/projects/${projectId}/info`, '_blank');
+        }
 
         // Archive a project
         async function archiveProject(projectId, projectName) {
