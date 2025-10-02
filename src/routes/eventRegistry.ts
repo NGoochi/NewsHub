@@ -174,22 +174,10 @@ router.post('/write-to-sheet', async (req: express.Request, res: express.Respons
     const authClient = await getAuthClient();
     const sheets = google.sheets({ version: 'v4', auth: authClient });
 
-    // Format articles for sheets
+    // Format articles for sheets (no headers needed - they're already in the sheet)
     const formattedArticles = eventRegistryAPI.formatArticlesForSheets(articles);
 
-    // Add headers
-    const headers = [
-      'Article ID', 
-      'Article Source Outlet', 
-      'Article Title', 
-      'Article Author/s', 
-      'Article URLs', 
-      'Article Full Body Text', 
-      'Date the article was written', 
-      'Article Input Method'
-    ];
-
-    const sheetData = [headers, ...formattedArticles];
+    const sheetData = formattedArticles;
 
     // Write to the project's sheet in batches to handle large datasets
     const batchSize = 1000; // Process 1000 articles at a time
@@ -200,9 +188,8 @@ router.post('/write-to-sheet', async (req: express.Request, res: express.Respons
       const endIndex = Math.min(startIndex + batchSize, sheetData.length);
       const batch = sheetData.slice(startIndex, endIndex);
       
-      // For the first batch, use append to add headers if needed
-      // For subsequent batches, just append the data rows
-      const range = i === 0 ? 'Articles!A1' : 'Articles!A:A';
+      // Append data rows to the existing sheet
+      const range = 'Articles!A:A';
       
       await sheets.spreadsheets.values.append({
         spreadsheetId: project.sheetId,
